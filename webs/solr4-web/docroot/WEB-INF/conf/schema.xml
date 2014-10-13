@@ -94,7 +94,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" ignoreCase="true" words="lang/stopwords_ar.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        ignoreCase="true" words="lang/stopwords_ar.txt" />
 				<filter class="solr.ArabicNormalizationFilterFactory" />
 				<filter class="solr.ArabicStemFilterFactory" />
 			</analyzer>
@@ -106,7 +107,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" ignoreCase="true" words="lang/stopwords_bg.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        ignoreCase="true" words="lang/stopwords_bg.txt" />
 				<filter class="solr.BulgarianStemFilterFactory" />
 			</analyzer>
 		</fieldType>
@@ -118,7 +120,8 @@
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter articles="lang/contractions_ca.txt" class="solr.ElisionFilterFactory" ignoreCase="true" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" ignoreCase="true" words="lang/stopwords_ca.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        ignoreCase="true" words="lang/stopwords_ca.txt"/>
 				<filter class="solr.SnowballPorterFilterFactory" language="Catalan" />
 			</analyzer>
 		</fieldType>
@@ -140,7 +143,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" ignoreCase="true" words="lang/stopwords_cz.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        ignoreCase="true" words="lang/stopwords_cz.txt" />
 				<filter class="solr.CzechStemFilterFactory" />
 			</analyzer>
 		</fieldType>
@@ -151,7 +155,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" format="snowball" ignoreCase="true" words="lang/stopwords_da.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        format="snowball" ignoreCase="true" words="lang/stopwords_da.txt" />
 				<filter class="solr.SnowballPorterFilterFactory" language="Danish" />
 			</analyzer>
 		</fieldType>
@@ -162,7 +167,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" format="snowball" ignoreCase="true" words="lang/stopwords_de.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        format="snowball" ignoreCase="true" words="lang/stopwords_de.txt" />
 				<filter class="solr.GermanNormalizationFilterFactory" />
 				<filter class="solr.GermanLightStemFilterFactory" />
 			</analyzer>
@@ -174,7 +180,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.GreekLowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" ignoreCase="false" words="lang/stopwords_el.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        ignoreCase="false" words="lang/stopwords_el.txt" />
 				<filter class="solr.GreekStemFilterFactory" />
 			</analyzer>
 		</fieldType>
@@ -183,21 +190,21 @@
 
 		<fieldType class="solr.TextField" name="text_en" positionIncrementGap="100">
 			<analyzer type="index">
-				<tokenizer class="solr.StandardTokenizerFactory" />
+				<tokenizer class="solr.StandardTokenizerFactory"/>
 				<filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/stopwords_en.txt" />
-				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.EnglishPossessiveFilterFactory" />
-				<filter class="solr.KeywordMarkerFilterFactory" protected="protwords.txt" />
-				<filter class="solr.PorterStemFilterFactory" />
+				<filter class="solr.LowerCaseFilterFactory"/>
+				<filter class="solr.EnglishPossessiveFilterFactory"/>
+				<filter class="solr.KeywordMarkerFilterFactory" protected="protwords.txt"/>
+				<filter class="solr.PorterStemFilterFactory"/>
 			</analyzer>
 			<analyzer type="query">
-				<tokenizer class="solr.StandardTokenizerFactory" />
+				<tokenizer class="solr.StandardTokenizerFactory"/>
 				<filter class="solr.SynonymFilterFactory" expand="true" ignoreCase="true" synonyms="synonyms.txt" />
 				<filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/stopwords_en.txt" />
-				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.EnglishPossessiveFilterFactory" />
-				<filter class="solr.KeywordMarkerFilterFactory" protected="protwords.txt" />
-				<filter class="solr.PorterStemFilterFactory" />
+				<filter class="solr.LowerCaseFilterFactory"/>
+				<filter class="solr.EnglishPossessiveFilterFactory"/>
+				<filter class="solr.KeywordMarkerFilterFactory" protected="protwords.txt"/>
+				<filter class="solr.PorterStemFilterFactory"/>
 			</analyzer>
 		</fieldType>
 
@@ -207,7 +214,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" format="snowball" ignoreCase="true" words="lang/stopwords_es.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        format="snowball" ignoreCase="true" words="lang/stopwords_es.txt" />
 				<filter class="solr.SpanishLightStemFilterFactory" />
 			</analyzer>
 		</fieldType>
@@ -233,7 +241,8 @@
 				<filter class="solr.LowerCaseFilterFactory" />
 				<filter class="solr.ArabicNormalizationFilterFactory" />
 				<filter class="solr.PersianNormalizationFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" ignoreCase="true" words="lang/stopwords_fa.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        ignoreCase="true" words="lang/stopwords_fa.txt" />
 			</analyzer>
 		</fieldType>
 
@@ -243,7 +252,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" format="snowball" ignoreCase="true" words="lang/stopwords_fi.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        format="snowball" ignoreCase="true" words="lang/stopwords_fi.txt" />
 				<filter class="solr.SnowballPorterFilterFactory" language="Finnish" />
 			</analyzer>
 		</fieldType>
@@ -255,7 +265,8 @@
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter articles="lang/contractions_fr.txt" class="solr.ElisionFilterFactory" ignoreCase="true" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" format="snowball" ignoreCase="true" words="lang/stopwords_fr.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        format="snowball" ignoreCase="true" words="lang/stopwords_fr.txt" />
 				<filter class="solr.FrenchLightStemFilterFactory" />
 			</analyzer>
 		</fieldType>
@@ -266,9 +277,11 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter articles="lang/contractions_ga.txt" class="solr.ElisionFilterFactory" ignoreCase="true" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="false" ignoreCase="true" words="lang/hyphenations_ga.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="false"
+				        ignoreCase="true" words="lang/hyphenations_ga.txt" />
 				<filter class="solr.IrishLowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" ignoreCase="true" words="lang/stopwords_ga.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        ignoreCase="true" words="lang/stopwords_ga.txt" />
 				<filter class="solr.SnowballPorterFilterFactory" language="Irish" />
 			</analyzer>
 		</fieldType>
@@ -279,7 +292,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" ignoreCase="true" words="lang/stopwords_gl.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        ignoreCase="true" words="lang/stopwords_gl.txt" />
 				<filter class="solr.GalicianStemFilterFactory" />
 			</analyzer>
 		</fieldType>
@@ -292,7 +306,8 @@
 				<filter class="solr.LowerCaseFilterFactory" />
 				<filter class="solr.IndicNormalizationFilterFactory" />
 				<filter class="solr.HindiNormalizationFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" ignoreCase="true" words="lang/stopwords_hi.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        ignoreCase="true" words="lang/stopwords_hi.txt" />
 				<filter class="solr.HindiStemFilterFactory" />
 			</analyzer>
 		</fieldType>
@@ -303,7 +318,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" format="snowball" ignoreCase="true" words="lang/stopwords_hu.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        format="snowball" ignoreCase="true" words="lang/stopwords_hu.txt" />
 				<filter class="solr.SnowballPorterFilterFactory" language="Hungarian" />
 			</analyzer>
 		</fieldType>
@@ -314,7 +330,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" ignoreCase="true" words="lang/stopwords_hy.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        ignoreCase="true" words="lang/stopwords_hy.txt" />
 				<filter class="solr.SnowballPorterFilterFactory" language="Armenian" />
 			</analyzer>
 		</fieldType>
@@ -325,7 +342,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" ignoreCase="true" words="lang/stopwords_id.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        ignoreCase="true" words="lang/stopwords_id.txt" />
 				<filter class="solr.IndonesianStemFilterFactory" stemDerivational="false" />
 			</analyzer>
 		</fieldType>
@@ -335,9 +353,11 @@
 		<fieldType class="solr.TextField" name="text_it" positionIncrementGap="100">
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
-				<filter articles="lang/contractions_it.txt" class="solr.ElisionFilterFactory" ignoreCase="true" />
+				<filter class="solr.ElisionFilterFactory" ignoreCase="true"
+				        articles="lang/contractions_it.txt" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" format="snowball" ignoreCase="true" words="lang/stopwords_it.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        format="snowball" ignoreCase="true" words="lang/stopwords_it.txt" />
 				<filter class="solr.ItalianLightStemFilterFactory" />
 			</analyzer>
 		</fieldType>
@@ -348,9 +368,11 @@
 			<analyzer>
 				<tokenizer class="solr.JapaneseTokenizerFactory" mode="search" />
 				<filter class="solr.JapaneseBaseFormFilterFactory" />
-				<filter class="solr.JapanesePartOfSpeechStopFilterFactory" enablePositionIncrements="true" tags="lang/stoptags_ja.txt" />
+				<filter class="solr.JapanesePartOfSpeechStopFilterFactory"
+				        enablePositionIncrements="true" tags="lang/stoptags_ja.txt" />
 				<filter class="solr.CJKWidthFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" ignoreCase="true" words="lang/stopwords_ja.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        ignoreCase="true" words="lang/stopwords_ja.txt"/>
 				<filter class="solr.JapaneseKatakanaStemFilterFactory" minimumLength="4" />
 				<filter class="solr.LowerCaseFilterFactory" />
 			</analyzer>
@@ -362,8 +384,10 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" format="snowball" ignoreCase="true" words="lang/stopwords_nl.txt" />
-				<filter class="solr.StemmerOverrideFilterFactory" dictionary="lang/stemdict_nl.txt" ignoreCase="false" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        format="snowball" ignoreCase="true" words="lang/stopwords_nl.txt" />
+				<filter class="solr.StemmerOverrideFilterFactory"
+				        dictionary="lang/stemdict_nl.txt" ignoreCase="false" />
 				<filter class="solr.SnowballPorterFilterFactory" language="Dutch" />
 			</analyzer>
 		</fieldType>
@@ -374,7 +398,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" format="snowball" ignoreCase="true" words="lang/stopwords_no.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        format="snowball" ignoreCase="true" words="lang/stopwords_no.txt" />
 				<filter class="solr.SnowballPorterFilterFactory" language="Norwegian" />
 			</analyzer>
 		</fieldType>
@@ -385,8 +410,9 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" format="snowball" ignoreCase="true" words="lang/stopwords_pt.txt" />
-				<filter class="solr.SnowballPorterFilterFactory" language="Portuguese" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        format="snowball" ignoreCase="true" words="lang/stopwords_pt.txt" />
+				<filter class="solr.SnowballPorterFilterFactory" language="Portuguese"/>
 			</analyzer>
 		</fieldType>
 
@@ -396,7 +422,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" ignoreCase="true" words="lang/stopwords_ro.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        ignoreCase="true" words="lang/stopwords_ro.txt"/>
 				<filter class="solr.SnowballPorterFilterFactory" language="Romanian" />
 			</analyzer>
 		</fieldType>
@@ -407,7 +434,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" format="snowball" ignoreCase="true" words="lang/stopwords_ru.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        format="snowball" ignoreCase="true" words="lang/stopwords_ru.txt" />
 				<filter class="solr.SnowballPorterFilterFactory" language="Russian" />
 			</analyzer>
 		</fieldType>
@@ -418,7 +446,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" format="snowball" ignoreCase="true" words="lang/stopwords_sv.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        format="snowball" ignoreCase="true" words="lang/stopwords_sv.txt" />
 				<filter class="solr.SnowballPorterFilterFactory" language="Swedish" />
 			</analyzer>
 		</fieldType>
@@ -430,7 +459,8 @@
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.LowerCaseFilterFactory" />
 				<filter class="solr.ThaiWordFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" ignoreCase="true" words="lang/stopwords_th.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        ignoreCase="true" words="lang/stopwords_th.txt" />
 			</analyzer>
 		</fieldType>
 
@@ -440,7 +470,8 @@
 			<analyzer>
 				<tokenizer class="solr.StandardTokenizerFactory" />
 				<filter class="solr.TurkishLowerCaseFilterFactory" />
-				<filter class="solr.StopFilterFactory" enablePositionIncrements="true" ignoreCase="false" words="lang/stopwords_tr.txt" />
+				<filter class="solr.StopFilterFactory" enablePositionIncrements="true"
+				        ignoreCase="false" words="lang/stopwords_tr.txt" />
 				<filter class="solr.SnowballPorterFilterFactory" language="Turkish" />
 			</analyzer>
 		</fieldType>
@@ -449,18 +480,24 @@
 		<field indexed="true" name="articleId" stored="true" type="string" />
 		<field indexed="true" name="assetCategoryIds" stored="true" type="string" />
 		<field indexed="true" name="assetTagIds" stored="true" type="string" />
+		<field indexed="true" name="comments" stored="true" type="text" />
 		<field indexed="true" name="companyId" stored="true" type="long" />
+		<field indexed="true" name="content" stored="true" type="text" />
 		<field indexed="true" name="createDate" stored="true" type="string" />
+		<field indexed="true" name="description" stored="true" type="text" />
 		<field indexed="true" name="entryClassPK" stored="true" type="string" />
 		<field indexed="true" name="entryClassName" stored="true" type="string" />
 		<field indexed="true" name="expirationDate" stored="true" type="string" />
+		<field indexed="true" name="firstName" stored="true" type="string_lowercase" />
 		<field indexed="true" name="folderId" stored="true" type="string" />
 		<field indexed="true" multiValued="true" name="groupId" stored="true" type="string" />
 		<field indexed="true" name="id" stored="true" type="string" />
 		<field indexed="true" name="keywordSearch" omitNorms="true" omitTermFreqAndPositions="true" stored="true" type="textAuto" />
 		<field indexed="true" name="languageId" stored="true" type="string" />
+		<field indexed="true" name="lastName" stored="true" type="string_lowercase" />
 		<field indexed="true" name="leftOrganizationId" stored="true" type="slong" />
 		<field indexed="true" name="modified" stored="true" type="string" />
+		<field indexed="true" name="name" stored="true" type="string" />
 		<field indexed="true" name="nodeId" stored="true" type="string" />
 		<field indexed="true" name="path" stored="true" type="string" />
 		<field indexed="true" name="portletId" stored="true" type="string" />
@@ -475,60 +512,57 @@
 		<field indexed="true" name="spellCheckWeight" stored="true" type="string" />
 		<field indexed="true" multiValued="true" name="spellCheckWord" stored="true" type="textSpell" />
 		<field indexed="true" name="status" stored="true" type="string" />
+		<field indexed="true" name="title" stored="true" type="text" />
 		<field indexed="true" name="treePath" stored="true" type="string" />
 		<field indexed="true" name="type" stored="true" type="string" />
 		<field indexed="true" name="uid" stored="true" type="string" />
-		<field indexed="true" name="url" stored="true" type="string" />
 		<field indexed="true" name="userId" stored="true" type="string" />
+		<field indexed="true" name="url" stored="true" type="string" />
 		<field indexed="true" name="userName" stored="true" type="string" />
 		<field indexed="true" name="version" stored="true" type="string" />
 		<field indexed="true" name="visible" stored="true" type="string" />
 		<field indexed="true" multiValued="false" name="_version_" stored="true" type="long" />
+		<dynamicField indexed="true" multiValued="true" name="*CategoryNames" stored="true" type="string" />
+		<dynamicField indexed="true" multiValued="true" name="*CategoryIds" stored="true" type="string" />
 		<dynamicField indexed="true" multiValued="false" name="*_sortable" stored="true" type="string" />
 		<dynamicField indexed="true" multiValued="true" name="expando__*" stored="true" type="text" />
-		<dynamicField indexed="true" name="*_ar_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_ar" />
-		<dynamicField indexed="true" name="*_bg_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_bg" />
-		<dynamicField indexed="true" name="*_ca_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_ca" />
-		<dynamicField indexed="true" name="*_cs_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_cz" />
-		<dynamicField indexed="true" name="*_da_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_da" />
-		<dynamicField indexed="true" name="*_de_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_de" />
-		<dynamicField indexed="true" name="*_el_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_el" />
-		<dynamicField indexed="true" name="*_en_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_en" />
-		<dynamicField indexed="true" name="*_es_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_es" />
-		<dynamicField indexed="true" name="*_eu_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_eu" />
-		<dynamicField indexed="true" name="*_fa_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_fa" />
-		<dynamicField indexed="true" name="*_fi_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_fi" />
-		<dynamicField indexed="true" name="*_fr_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_fr" />
-		<dynamicField indexed="true" name="*_ga_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_ga" />
-		<dynamicField indexed="true" name="*_gl_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_gl" />
-		<dynamicField indexed="true" name="*_hi_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_hi" />
-		<dynamicField indexed="true" name="*_hu_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_hu" />
-		<dynamicField indexed="true" name="*_hy_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_hy" />
-		<dynamicField indexed="true" name="*_id_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_id" />
-		<dynamicField indexed="true" name="*_it_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_it" />
-		<dynamicField indexed="true" name="*_ja_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_ja" />
-		<dynamicField indexed="true" name="*_id_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_id" />
-		<dynamicField indexed="true" name="*_id_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_id" />
-		<dynamicField indexed="true" name="*_id_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_id" />
-		<dynamicField indexed="true" name="*_id_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_id" />
-		<dynamicField indexed="true" name="*_id_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_id" />
-		<dynamicField indexed="true" name="*_id_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_id" />
-		<dynamicField indexed="true" name="*_ko_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_ko" />
-		<dynamicField indexed="true" name="*_nl_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_nl" />
-		<dynamicField indexed="true" name="*_no_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_no" />
-		<dynamicField indexed="true" name="*_pt_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_pt" />
-		<dynamicField indexed="true" name="*_ro_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_ro" />
-		<dynamicField indexed="true" name="*_ru_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_ru" />
-		<dynamicField indexed="true" name="*_sv_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_sv" />
-		<dynamicField indexed="true" name="*_th_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_th" />
-		<dynamicField indexed="true" name="*_tr_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_tr" />
-		<dynamicField indexed="true" name="*_zh_*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_cjk" />
+		<dynamicField indexed="true" name="*_ar" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_ar" />
+		<dynamicField indexed="true" name="*_bg" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_bg" />
+		<dynamicField indexed="true" name="*_ca" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_ca" />
+		<dynamicField indexed="true" name="*_cs" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_cz" />
+		<dynamicField indexed="true" name="*_da" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_da" />
+		<dynamicField indexed="true" name="*_de" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_de" />
+		<dynamicField indexed="true" name="*_el" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_el" />
+		<dynamicField indexed="true" name="*_en" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_en" />
+		<dynamicField indexed="true" name="*_es" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_es" />
+		<dynamicField indexed="true" name="*_eu" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_eu" />
+		<dynamicField indexed="true" name="*_fa" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_fa" />
+		<dynamicField indexed="true" name="*_fi" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_fi" />
+		<dynamicField indexed="true" name="*_fr" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_fr" />
+		<dynamicField indexed="true" name="*_ga" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_ga" />
+		<dynamicField indexed="true" name="*_gl" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_gl" />
+		<dynamicField indexed="true" name="*_hi" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_hi" />
+		<dynamicField indexed="true" name="*_hu" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_hu" />
+		<dynamicField indexed="true" name="*_hy" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_hy" />
+		<dynamicField indexed="true" name="*_id" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_id" />
+		<dynamicField indexed="true" name="*_it" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_it" />
+		<dynamicField indexed="true" name="*_ja" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_ja" />
+		<dynamicField indexed="true" name="*_nl" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_nl" />
+		<dynamicField indexed="true" name="*_no" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_no" />
+		<dynamicField indexed="true" name="*_pt" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_pt" />
+		<dynamicField indexed="true" name="*_ro" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_ro" />
+		<dynamicField indexed="true" name="*_ru" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_ru" />
+		<dynamicField indexed="true" name="*_sv" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_sv" />
+		<dynamicField indexed="true" name="*_th" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_th" />
+		<dynamicField indexed="true" name="*_tr" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_tr" />
+		<dynamicField indexed="true" name="*_zh" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text_cjk" />
+		<dynamicField indexed="true" name="web_content/*" stored="true" type="text" />
 
 		<!--
 		This must be the last entry since the fields element is an ordered set.
 		-->
 
-		<dynamicField indexed="true" name="*" stored="true" termPositions="true" termOffsets="true" termVectors="true" type="text" />
+		<dynamicField indexed="true" multiValued="true" name="*" stored="true" type="string" />
 	</fields>
 	<uniqueKey>uid</uniqueKey>
 	<defaultSearchField>content</defaultSearchField>
