@@ -4,10 +4,14 @@
 	default-destroy-method="destroy"
 	default-init-method="afterPropertiesSet"
 	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
 	xmlns:util="http://www.springframework.org/schema/util"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd"
 >
+
+	<context:property-placeholder ignore-resource-not-found="true" ignore-unresolvable="true" location="/WEB-INF/classes/solr.properties,/WEB-INF/classes/solr-ext.properties" />
+
 	<bean class="com.liferay.portal.spring.context.PortletBeanFactoryPostProcessor" />
 
 	<!-- Solr document -->
@@ -60,13 +64,13 @@
 				</property>
 			</bean>
 		</property>
-		<property name="keyStoreLocation" value="/etc/pki/cert/client/keystore.jks" />
-		<property name="keyStorePassword" value="secret" />
-		<property name="keyStoreType" value="JKS" />
+		<property name="keyStorePassword" value="${digital.signature.key.store.password}" />
+		<property name="keyStorePath" value="${digital.signature.key.store.path}" />
+		<property name="keyStoreType" value="${digital.signature.key.store.type}" />
 		<property name="maxTotalConnections" value="20" />
-		<property name="trustStoreLocation" value="/etc/pki/cert/ca/truststore.jks" />
-		<property name="trustStorePassword" value="secret" />
-		<property name="trustStoreType" value="JKS" />
+		<property name="trustStorePassword" value="${digital.signature.trust.store.password}" />
+		<property name="keyStorePath" value="${digital.signature.trust.store.path}" />
+		<property name="trustStoreType" value="${digital.signature.trust.store.type}" />
 		<property name="verifyServerCertificate" value="true" />
 		<property name="verifyServerHostname" value="true" />
 	</bean>

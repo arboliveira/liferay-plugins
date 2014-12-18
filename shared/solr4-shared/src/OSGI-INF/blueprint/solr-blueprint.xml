@@ -1,6 +1,13 @@
 <?xml version="1.0"?>
 
-<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:ext="http://aries.apache.org/blueprint/xmlns/blueprint-ext/v1.0.0">
+
+	<ext:property-placeholder>
+		<ext:location>classpath:solr.properties</ext:location>
+		<ext:location>classpath:solr-ext.properties</ext:location>
+		<ext:ignore-missing-locations>true</ext:ignore-missing-locations>
+	</ext:property-placeholder>
 
 	<!-- Solr document -->
 
@@ -52,13 +59,13 @@
 				</property>
 			</bean>
 		</property>
-		<property name="keyStoreLocation" value="/etc/pki/cert/client/keystore.jks" />
-		<property name="keyStorePassword" value="secret" />
-		<property name="keyStoreType" value="JKS" />
+		<property name="keyStorePassword" value="${digital.signature.key.store.password}" />
+		<property name="keyStorePath" value="${digital.signature.key.store.path}" />
+		<property name="keyStoreType" value="${digital.signature.key.store.type}" />
 		<property name="maxTotalConnections" value="20" />
-		<property name="trustStoreLocation" value="/etc/pki/cert/ca/truststore.jks" />
-		<property name="trustStorePassword" value="secret" />
-		<property name="trustStoreType" value="JKS" />
+		<property name="trustStorePassword" value="${digital.signature.trust.store.password}" />
+		<property name="keyStorePath" value="${digital.signature.trust.store.path}" />
+		<property name="trustStoreType" value="${digital.signature.trust.store.type}" />
 		<property name="verifyServerCertificate" value="true" />
 		<property name="verifyServerHostname" value="true" />
 	</bean>
