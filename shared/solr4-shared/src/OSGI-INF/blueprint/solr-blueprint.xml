@@ -70,6 +70,22 @@
 	<bean class="com.liferay.portal.search.solr.SolrIndexSearcher" id="com.liferay.portal.search.solr.SolrIndexSearcher">
 		<property name="facetProcessor" ref="com.liferay.portal.search.solr.facet.CompositeFacetProcessor" />
 		<property name="querySuggester" ref="com.liferay.portal.search.solr.SolrQuerySuggester" />
+		<property name="queryTranslator">
+			<bean class="com.liferay.portal.search.solr.SolrQueryTranslator">
+				<property name="booleanQueryTranslator">
+					<bean class="com.liferay.portal.search.solr.query.BooleanQueryTranslatorImpl" />
+				</property>
+				<property name="termQueryTranslator">
+					<bean class="com.liferay.portal.search.solr.query.TermQueryTranslatorImpl" />
+				</property>
+				<property name="termRangeQueryTranslator">
+					<bean class="com.liferay.portal.search.solr.query.TermRangeQueryTranslatorImpl" />
+				</property>
+				<property name="wildcardQueryTranslator">
+					<bean class="com.liferay.portal.search.solr.query.WildcardQueryTranslatorImpl" />
+				</property>
+			</bean>
+		</property>
 		<property name="solrServer" ref="com.liferay.portal.search.solr.server.HttpSolrServer" />
 		<property name="swallowException" value="true" />
 	</bean>
