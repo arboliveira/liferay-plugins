@@ -17,6 +17,8 @@ package com.liferay.asset.entry.set.service.base;
 import com.liferay.asset.entry.set.model.AssetEntrySet;
 import com.liferay.asset.entry.set.service.AssetEntrySetLocalService;
 import com.liferay.asset.entry.set.service.persistence.AssetEntrySetFinder;
+import com.liferay.asset.entry.set.service.persistence.AssetEntrySetLikeFinder;
+import com.liferay.asset.entry.set.service.persistence.AssetEntrySetLikePersistence;
 import com.liferay.asset.entry.set.service.persistence.AssetEntrySetPersistence;
 
 import com.liferay.portal.kernel.bean.BeanReference;
@@ -39,8 +41,6 @@ import com.liferay.portal.service.persistence.GroupPersistence;
 import com.liferay.portal.service.persistence.UserPersistence;
 
 import com.liferay.portlet.asset.service.persistence.AssetEntryPersistence;
-import com.liferay.portlet.ratings.service.persistence.RatingsEntryPersistence;
-import com.liferay.portlet.ratings.service.persistence.RatingsStatsPersistence;
 
 import java.io.Serializable;
 
@@ -364,6 +364,82 @@ public abstract class AssetEntrySetLocalServiceBaseImpl
 	}
 
 	/**
+	 * Returns the asset entry set like local service.
+	 *
+	 * @return the asset entry set like local service
+	 */
+	public com.liferay.asset.entry.set.service.AssetEntrySetLikeLocalService getAssetEntrySetLikeLocalService() {
+		return assetEntrySetLikeLocalService;
+	}
+
+	/**
+	 * Sets the asset entry set like local service.
+	 *
+	 * @param assetEntrySetLikeLocalService the asset entry set like local service
+	 */
+	public void setAssetEntrySetLikeLocalService(
+		com.liferay.asset.entry.set.service.AssetEntrySetLikeLocalService assetEntrySetLikeLocalService) {
+		this.assetEntrySetLikeLocalService = assetEntrySetLikeLocalService;
+	}
+
+	/**
+	 * Returns the asset entry set like remote service.
+	 *
+	 * @return the asset entry set like remote service
+	 */
+	public com.liferay.asset.entry.set.service.AssetEntrySetLikeService getAssetEntrySetLikeService() {
+		return assetEntrySetLikeService;
+	}
+
+	/**
+	 * Sets the asset entry set like remote service.
+	 *
+	 * @param assetEntrySetLikeService the asset entry set like remote service
+	 */
+	public void setAssetEntrySetLikeService(
+		com.liferay.asset.entry.set.service.AssetEntrySetLikeService assetEntrySetLikeService) {
+		this.assetEntrySetLikeService = assetEntrySetLikeService;
+	}
+
+	/**
+	 * Returns the asset entry set like persistence.
+	 *
+	 * @return the asset entry set like persistence
+	 */
+	public AssetEntrySetLikePersistence getAssetEntrySetLikePersistence() {
+		return assetEntrySetLikePersistence;
+	}
+
+	/**
+	 * Sets the asset entry set like persistence.
+	 *
+	 * @param assetEntrySetLikePersistence the asset entry set like persistence
+	 */
+	public void setAssetEntrySetLikePersistence(
+		AssetEntrySetLikePersistence assetEntrySetLikePersistence) {
+		this.assetEntrySetLikePersistence = assetEntrySetLikePersistence;
+	}
+
+	/**
+	 * Returns the asset entry set like finder.
+	 *
+	 * @return the asset entry set like finder
+	 */
+	public AssetEntrySetLikeFinder getAssetEntrySetLikeFinder() {
+		return assetEntrySetLikeFinder;
+	}
+
+	/**
+	 * Sets the asset entry set like finder.
+	 *
+	 * @param assetEntrySetLikeFinder the asset entry set like finder
+	 */
+	public void setAssetEntrySetLikeFinder(
+		AssetEntrySetLikeFinder assetEntrySetLikeFinder) {
+		this.assetEntrySetLikeFinder = assetEntrySetLikeFinder;
+	}
+
+	/**
 	 * Returns the counter local service.
 	 *
 	 * @return the counter local service
@@ -627,101 +703,6 @@ public abstract class AssetEntrySetLocalServiceBaseImpl
 		this.assetEntryPersistence = assetEntryPersistence;
 	}
 
-	/**
-	 * Returns the ratings entry local service.
-	 *
-	 * @return the ratings entry local service
-	 */
-	public com.liferay.portlet.ratings.service.RatingsEntryLocalService getRatingsEntryLocalService() {
-		return ratingsEntryLocalService;
-	}
-
-	/**
-	 * Sets the ratings entry local service.
-	 *
-	 * @param ratingsEntryLocalService the ratings entry local service
-	 */
-	public void setRatingsEntryLocalService(
-		com.liferay.portlet.ratings.service.RatingsEntryLocalService ratingsEntryLocalService) {
-		this.ratingsEntryLocalService = ratingsEntryLocalService;
-	}
-
-	/**
-	 * Returns the ratings entry remote service.
-	 *
-	 * @return the ratings entry remote service
-	 */
-	public com.liferay.portlet.ratings.service.RatingsEntryService getRatingsEntryService() {
-		return ratingsEntryService;
-	}
-
-	/**
-	 * Sets the ratings entry remote service.
-	 *
-	 * @param ratingsEntryService the ratings entry remote service
-	 */
-	public void setRatingsEntryService(
-		com.liferay.portlet.ratings.service.RatingsEntryService ratingsEntryService) {
-		this.ratingsEntryService = ratingsEntryService;
-	}
-
-	/**
-	 * Returns the ratings entry persistence.
-	 *
-	 * @return the ratings entry persistence
-	 */
-	public RatingsEntryPersistence getRatingsEntryPersistence() {
-		return ratingsEntryPersistence;
-	}
-
-	/**
-	 * Sets the ratings entry persistence.
-	 *
-	 * @param ratingsEntryPersistence the ratings entry persistence
-	 */
-	public void setRatingsEntryPersistence(
-		RatingsEntryPersistence ratingsEntryPersistence) {
-		this.ratingsEntryPersistence = ratingsEntryPersistence;
-	}
-
-	/**
-	 * Returns the ratings stats local service.
-	 *
-	 * @return the ratings stats local service
-	 */
-	public com.liferay.portlet.ratings.service.RatingsStatsLocalService getRatingsStatsLocalService() {
-		return ratingsStatsLocalService;
-	}
-
-	/**
-	 * Sets the ratings stats local service.
-	 *
-	 * @param ratingsStatsLocalService the ratings stats local service
-	 */
-	public void setRatingsStatsLocalService(
-		com.liferay.portlet.ratings.service.RatingsStatsLocalService ratingsStatsLocalService) {
-		this.ratingsStatsLocalService = ratingsStatsLocalService;
-	}
-
-	/**
-	 * Returns the ratings stats persistence.
-	 *
-	 * @return the ratings stats persistence
-	 */
-	public RatingsStatsPersistence getRatingsStatsPersistence() {
-		return ratingsStatsPersistence;
-	}
-
-	/**
-	 * Sets the ratings stats persistence.
-	 *
-	 * @param ratingsStatsPersistence the ratings stats persistence
-	 */
-	public void setRatingsStatsPersistence(
-		RatingsStatsPersistence ratingsStatsPersistence) {
-		this.ratingsStatsPersistence = ratingsStatsPersistence;
-	}
-
 	public void afterPropertiesSet() {
 		Class<?> clazz = getClass();
 
@@ -812,6 +793,14 @@ public abstract class AssetEntrySetLocalServiceBaseImpl
 	protected AssetEntrySetPersistence assetEntrySetPersistence;
 	@BeanReference(type = AssetEntrySetFinder.class)
 	protected AssetEntrySetFinder assetEntrySetFinder;
+	@BeanReference(type = com.liferay.asset.entry.set.service.AssetEntrySetLikeLocalService.class)
+	protected com.liferay.asset.entry.set.service.AssetEntrySetLikeLocalService assetEntrySetLikeLocalService;
+	@BeanReference(type = com.liferay.asset.entry.set.service.AssetEntrySetLikeService.class)
+	protected com.liferay.asset.entry.set.service.AssetEntrySetLikeService assetEntrySetLikeService;
+	@BeanReference(type = AssetEntrySetLikePersistence.class)
+	protected AssetEntrySetLikePersistence assetEntrySetLikePersistence;
+	@BeanReference(type = AssetEntrySetLikeFinder.class)
+	protected AssetEntrySetLikeFinder assetEntrySetLikeFinder;
 	@BeanReference(type = com.liferay.counter.service.CounterLocalService.class)
 	protected com.liferay.counter.service.CounterLocalService counterLocalService;
 	@BeanReference(type = com.liferay.portal.service.ClassNameLocalService.class)
@@ -840,16 +829,6 @@ public abstract class AssetEntrySetLocalServiceBaseImpl
 	protected com.liferay.portlet.asset.service.AssetEntryService assetEntryService;
 	@BeanReference(type = AssetEntryPersistence.class)
 	protected AssetEntryPersistence assetEntryPersistence;
-	@BeanReference(type = com.liferay.portlet.ratings.service.RatingsEntryLocalService.class)
-	protected com.liferay.portlet.ratings.service.RatingsEntryLocalService ratingsEntryLocalService;
-	@BeanReference(type = com.liferay.portlet.ratings.service.RatingsEntryService.class)
-	protected com.liferay.portlet.ratings.service.RatingsEntryService ratingsEntryService;
-	@BeanReference(type = RatingsEntryPersistence.class)
-	protected RatingsEntryPersistence ratingsEntryPersistence;
-	@BeanReference(type = com.liferay.portlet.ratings.service.RatingsStatsLocalService.class)
-	protected com.liferay.portlet.ratings.service.RatingsStatsLocalService ratingsStatsLocalService;
-	@BeanReference(type = RatingsStatsPersistence.class)
-	protected RatingsStatsPersistence ratingsStatsPersistence;
 	private String _beanIdentifier;
 	private ClassLoader _classLoader;
 	private AssetEntrySetLocalServiceClpInvoker _clpInvoker = new AssetEntrySetLocalServiceClpInvoker();

@@ -29,8 +29,6 @@ import com.liferay.portlet.announcements.service.AnnouncementsEntryLocalServiceU
 import com.liferay.portlet.asset.model.AssetEntry;
 import com.liferay.portlet.asset.service.AssetEntryLocalServiceUtil;
 
-import java.io.File;
-
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -46,14 +44,15 @@ public class AnnouncementsAssetEntrySetHandler
 	}
 
 	@Override
-	public JSONObject interpret(JSONObject payloadJSONObject, File file)
+	public JSONObject interpret(
+			JSONObject payloadJSONObject, long assetEntrySetId)
 		throws PortalException, SystemException {
 
-		JSONObject jsonObject = super.interpret(payloadJSONObject, file);
+		JSONObject jsonObject = super.interpret(
+			payloadJSONObject, assetEntrySetId);
 
 		long userId = payloadJSONObject.getLong("userId");
 		long classNameId = payloadJSONObject.getLong("classNameId");
-		long classPK = payloadJSONObject.getLong("classPK");
 		String title = payloadJSONObject.getString("title");
 		String content = payloadJSONObject.getString("content");
 		String url = payloadJSONObject.getString("url");
@@ -82,7 +81,7 @@ public class AnnouncementsAssetEntrySetHandler
 
 		AnnouncementsEntry announcementEntry =
 			AnnouncementsEntryLocalServiceUtil.addEntry(
-				userId, classNameId, classPK, title, content, url, type,
+				userId, classNameId, assetEntrySetId, title, content, url, type,
 				displayCalendar.get(Calendar.MONTH),
 				displayCalendar.get(Calendar.DATE),
 				displayCalendar.get(Calendar.YEAR),

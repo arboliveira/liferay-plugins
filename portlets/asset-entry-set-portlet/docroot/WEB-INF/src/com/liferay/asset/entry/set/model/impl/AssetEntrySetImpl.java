@@ -14,6 +14,14 @@
 
 package com.liferay.asset.entry.set.model.impl;
 
+import com.liferay.asset.entry.set.model.AssetEntrySet;
+import com.liferay.asset.entry.set.service.AssetEntrySetLocalServiceUtil;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.json.JSON;
+
+import java.util.List;
+
 /**
  * @author Brian Wing Shun Chan
  */
@@ -21,5 +29,28 @@ public class AssetEntrySetImpl extends AssetEntrySetBaseImpl {
 
 	public AssetEntrySetImpl() {
 	}
+
+	@JSON(include = true)
+	@Override
+	public List<AssetEntrySet> getChildAssetEntrySets() {
+		return _childAssetEntrySets;
+	}
+
+	@Override
+	public void setChildAssetEntrySets(
+			long userId, long createTime, int childAssetEntrySetsLimit)
+		throws PortalException, SystemException {
+
+		if (childAssetEntrySetsLimit <= 0) {
+			return;
+		}
+
+		_childAssetEntrySets =
+			AssetEntrySetLocalServiceUtil.getOldChildAssetEntrySets(
+				userId, createTime, getAssetEntrySetId(), 0,
+				childAssetEntrySetsLimit, null);
+	}
+
+	private List<AssetEntrySet> _childAssetEntrySets;
 
 }

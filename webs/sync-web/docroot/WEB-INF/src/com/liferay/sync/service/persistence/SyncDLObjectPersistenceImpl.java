@@ -1842,6 +1842,8 @@ public class SyncDLObjectPersistenceImpl extends BasePersistenceImpl<SyncDLObjec
 
 		syncDLObjectImpl.setSyncDLObjectId(syncDLObject.getSyncDLObjectId());
 		syncDLObjectImpl.setCompanyId(syncDLObject.getCompanyId());
+		syncDLObjectImpl.setUserId(syncDLObject.getUserId());
+		syncDLObjectImpl.setUserName(syncDLObject.getUserName());
 		syncDLObjectImpl.setCreateTime(syncDLObject.getCreateTime());
 		syncDLObjectImpl.setModifiedTime(syncDLObject.getModifiedTime());
 		syncDLObjectImpl.setRepositoryId(syncDLObject.getRepositoryId());
@@ -1853,6 +1855,7 @@ public class SyncDLObjectPersistenceImpl extends BasePersistenceImpl<SyncDLObjec
 		syncDLObjectImpl.setChangeLog(syncDLObject.getChangeLog());
 		syncDLObjectImpl.setExtraSettings(syncDLObject.getExtraSettings());
 		syncDLObjectImpl.setVersion(syncDLObject.getVersion());
+		syncDLObjectImpl.setVersionId(syncDLObject.getVersionId());
 		syncDLObjectImpl.setSize(syncDLObject.getSize());
 		syncDLObjectImpl.setChecksum(syncDLObject.getChecksum());
 		syncDLObjectImpl.setEvent(syncDLObject.getEvent());

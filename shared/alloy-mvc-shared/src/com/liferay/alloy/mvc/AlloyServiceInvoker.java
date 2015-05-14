@@ -46,6 +46,8 @@ public class AlloyServiceInvoker {
 		try {
 			Class<?> serviceClass = classLoader.loadClass(serviceClassName);
 
+			deleteModelMethod = serviceClass.getMethod(
+				"delete" + simpleClassName, new Class[] {long.class});
 			dynamicQueryCountMethod = serviceClass.getMethod(
 				"dynamicQueryCount", new Class[] {DynamicQuery.class});
 			dynamicQueryMethod1 = serviceClass.getMethod(
@@ -57,8 +59,10 @@ public class AlloyServiceInvoker {
 				new Class[] {DynamicQuery.class, int.class, int.class});
 			dynamicQueryMethod4 = serviceClass.getMethod(
 				"dynamicQuery",
-				new Class[] {DynamicQuery.class, int.class, int.class,
-					OrderByComparator.class});
+				new Class[] {
+					DynamicQuery.class, int.class, int.class,
+					OrderByComparator.class
+				});
 			fetchModelMethod = serviceClass.getMethod(
 				"fetch" + simpleClassName, new Class[] {long.class});
 			getModelsCountMethod = serviceClass.getMethod(
@@ -98,6 +102,15 @@ public class AlloyServiceInvoker {
 		}
 
 		return dynamicQuery;
+	}
+
+	public BaseModel<?> deleteModel(BaseModel<?> baseModel) throws Exception {
+		return (BaseModel<?>)deleteModelMethod.invoke(
+			false, baseModel.getPrimaryKeyObj());
+	}
+
+	public BaseModel<?> deleteModel(long classPK) throws Exception {
+		return (BaseModel<?>)deleteModelMethod.invoke(false, classPK);
 	}
 
 	/**
@@ -187,6 +200,7 @@ public class AlloyServiceInvoker {
 		return (Integer)getModelsCountMethod.invoke(false);
 	}
 
+	protected Method deleteModelMethod;
 	protected Method dynamicQueryCountMethod;
 	protected Method dynamicQueryMethod1;
 	protected Method dynamicQueryMethod2;

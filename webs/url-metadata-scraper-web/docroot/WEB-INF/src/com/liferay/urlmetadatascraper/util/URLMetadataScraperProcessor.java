@@ -14,9 +14,15 @@
 
 package com.liferay.urlmetadatascraper.util;
 
-import java.io.IOException;
+import java.awt.image.BufferedImage;
 
-import org.json.JSONException;
+import java.net.URL;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.imageio.ImageIO;
+
 import org.json.JSONObject;
 
 import org.jsoup.Connection;
@@ -31,39 +37,53 @@ import org.jsoup.select.Elements;
  */
 public class URLMetadataScraperProcessor {
 
-	public String getURLMetadataJSON(String url) throws IOException {
+	public String getURLMetadataJSON(String url) throws Exception {
 		JSONObject jsonObject = new JSONObject();
 
-		url =
-			HttpUtil.getProtocol(url) + HttpUtil.PROTOCOL_DELIMITER +
-				HttpUtil.getDomain(url);
-
-		Connection connection = Jsoup.connect(url);
-
-		Document document = connection.get();
+		Document document = null;
 
 		try {
-			jsonObject.put("description", getDescription(document));
+			url =
+				HttpUtil.getProtocol(url) + HttpUtil.PROTOCOL_DELIMITER +
+					HttpUtil.removeProtocol(url);
 
-			jsonObject.put("imageURL", getImageURL(document, url));
+			Connection connection = Jsoup.connect(url);
 
-			String domain = "";
-
-			int pos = url.indexOf('?');
-
-			if (pos != -1) {
-				domain = HttpUtil.getDomain(url.substring(0, pos));
-			}
-			else {
-				domain = HttpUtil.getDomain(url);
-			}
-
-			jsonObject.put("shortURL", domain.toUpperCase());
-
-			jsonObject.put("title", getTitle(document));
+			document = connection.get();
 		}
-		catch (JSONException jse) {
+		catch (Exception e) {
+			jsonObject.put("success", false);
+
+			return jsonObject.toString();
 		}
+
+		String title = getTitle(document);
+
+		if (Validator.isNull(title)) {
+			jsonObject.put("success", false);
+
+			return jsonObject.toString();
+		}
+
+		jsonObject.put("description", getDescription(document));
+		jsonObject.put("imageURLs", getImageURLs(document));
+
+		String domain = "";
+
+		int pos = url.indexOf('?');
+
+		if (pos != -1) {
+			domain = HttpUtil.getDomain(url.substring(0, pos));
+		}
+		else {
+			domain = HttpUtil.getDomain(url);
+		}
+
+		jsonObject.put("shortURL", domain.toLowerCase());
+
+		jsonObject.put("success", true);
+		jsonObject.put("title", title);
+		jsonObject.put("url", url);
 
 		return jsonObject.toString();
 	}
@@ -81,27 +101,34 @@ public class URLMetadataScraperProcessor {
 		return StringUtil.shorten(description, 200);
 	}
 
-	protected String getImageURL(Document document, String baseURL) {
-		String imageURL = "";
+	protected List<String> getImageURLs(Document document) throws Exception {
+		List<String> imageURLs = new ArrayList<String>();
 
 		Elements imageElements = document.select("meta[property=og:image]");
 
-		if (imageElements.isEmpty()) {
-			imageElements = document.select("img");
+		if (!imageElements.isEmpty()) {
+			String imageURL = imageElements.attr("content");
 
-			Element imageElement = imageElements.get(0);
-
-			imageURL = imageElement.attr("src");
-		}
-		else {
-			imageURL = imageElements.attr("content");
+			if (isValidImageURL(imageURL)) {
+				imageURLs.add(imageURL);
+			}
 		}
 
-		if (!HttpUtil.hasDomain(imageURL)) {
-			imageURL = baseURL + imageURL;
+		imageElements = document.select("img");
+
+		for (Element imageElement : imageElements) {
+			String imageURL = imageElement.absUrl("src");
+
+			if (isValidImageURL(imageURL) && !imageURLs.contains(imageURL)) {
+				imageURLs.add(imageURL);
+
+				if (imageURLs.size() >= _IMAGE_URLS_MAXIMUM) {
+					break;
+				}
+			}
 		}
 
-		return imageURL;
+		return imageURLs;
 	}
 
 	protected String getTitle(Document document) {
@@ -129,5 +156,41 @@ public class URLMetadataScraperProcessor {
 
 		return StringUtil.shorten(title, 200);
 	}
+
+	protected boolean isValidImageURL(String imageURL) throws Exception {
+		if (Validator.isNull(imageURL)) {
+			return false;
+		}
+
+		URL url = new URL(imageURL);
+
+		try {
+			BufferedImage bufferedImage = ImageIO.read(url);
+
+			if (bufferedImage == null) {
+				return false;
+			}
+
+			int height = bufferedImage.getHeight();
+			int width = bufferedImage.getWidth();
+
+			if (((height * width) >= _IMAGE_AREA_MINIMUM) &&
+				(height >= _IMAGE_DIMENSION_MINIMUM) &&
+				(width >= _IMAGE_DIMENSION_MINIMUM)) {
+
+				return true;
+			}
+		}
+		catch (Exception e) {
+		}
+
+		return false;
+	}
+
+	private static int _IMAGE_AREA_MINIMUM = 1000;
+
+	private static int _IMAGE_DIMENSION_MINIMUM = 80;
+
+	private static int _IMAGE_URLS_MAXIMUM = 10;
 
 }

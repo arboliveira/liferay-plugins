@@ -15,14 +15,18 @@
 package com.liferay.asset.entry.set.service.persistence;
 
 import com.liferay.asset.entry.set.model.AssetEntrySet;
+import com.liferay.asset.entry.set.model.AssetEntrySetReference;
 import com.liferay.asset.entry.set.model.impl.AssetEntrySetImpl;
+import com.liferay.asset.entry.set.util.AssetEntrySetParticipantInfoUtil;
+import com.liferay.compat.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.dao.orm.QueryPos;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.SQLQuery;
 import com.liferay.portal.kernel.dao.orm.Session;
-import com.liferay.portal.kernel.dao.orm.Type;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -30,9 +34,10 @@ import com.liferay.portal.service.ClassNameLocalServiceUtil;
 import com.liferay.portal.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.util.dao.orm.CustomSQLUtil;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Calvin Keum
@@ -42,29 +47,26 @@ public class AssetEntrySetFinderImpl
 	extends BasePersistenceImpl<AssetEntrySet>
 	implements AssetEntrySetFinder {
 
-	public static final String COUNT_BY_SHARED_TO_CLASS_PKS_MAP =
-		AssetEntrySetFinder.class.getName() + ".countBySharedToClassPKsMap";
+	public static final String
+		FIND_ASSET_ENTRY_SET_REFERENCE_BY_PAESI_CNI =
+			AssetEntrySetFinder.class.getName() +
+				".findAssetEntrySetReferenceByPAESI_CNI";
 
-	public static final String COUNT_BY_CCNI_ATN =
-		AssetEntrySetFinder.class.getName() + ".countByCCNI_ATN";
+	public static final String FIND_BY_CT_PAESI_CNI =
+		AssetEntrySetFinder.class.getName() + ".findByCT_PAESI_CNI";
 
-	public static final String COUNT_BY_CCNI_CCPK_ATN =
-		AssetEntrySetFinder.class.getName() + ".countByCCNI_CCPK_ATN";
+	public static final String JOIN_BY_ASSET_SHARING_ENTRY =
+		AssetEntrySetFinder.class.getName() + ".joinByAssetSharingEntry";
 
-	public static final String FIND_BY_SHARED_TO_CLASS_PKS_MAP =
-		AssetEntrySetFinder.class.getName() + ".findBySharedToClassPKsMap";
+	public static final String JOIN_BY_ASSET_TAG =
+		AssetEntrySetFinder.class.getName() + ".joinByAssetTag";
 
-	public static final String FIND_BY_CT_PASEI =
-		AssetEntrySetFinder.class.getName() + ".findByCT_PASEI";
-
-	public static final String FIND_BY_CCNI_ATN =
-		AssetEntrySetFinder.class.getName() + ".findByCCNI_ATN";
-
-	public static final String FIND_BY_CCNI_CCPK_ATN =
-		AssetEntrySetFinder.class.getName() + ".findByCCNI_CCPK_ATN";
-
-	@Override
-	public int countBySharedToClassPKsMap(Map<Long, long[]> sharedToClassPKsMap)
+	/**
+	 * Pattern for finding reference objects {@link
+	 * com.liferay.portal.service.persistence.LayoutFinderImpl#findByC_P_P}
+	 */
+	public List<AssetEntrySetReference>findAssetEntrySetReferenceByPAESI_CNI(
+			long parentAssetEntrySetId)
 		throws SystemException {
 
 		Session session = null;
@@ -72,31 +74,33 @@ public class AssetEntrySetFinderImpl
 		try {
 			session = openSession();
 
-			String sql = CustomSQLUtil.get(COUNT_BY_SHARED_TO_CLASS_PKS_MAP);
-
-			sql = StringUtil.replace(
-				sql, "[$SHARED_TO_CLASS_PKS_MAP]",
-				getSharedToClassPKsMap(sharedToClassPKsMap));
+			String sql = CustomSQLUtil.get(
+				FIND_ASSET_ENTRY_SET_REFERENCE_BY_PAESI_CNI);
 
 			SQLQuery q = session.createSQLQuery(sql);
 
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
-
 			QueryPos qPos = QueryPos.getInstance(q);
 
+			qPos.add(parentAssetEntrySetId);
 			qPos.add(_ASSET_ENTRY_SET_CLASS_NAME_ID);
 
-			Iterator<Long> itr = q.iterate();
+			List<AssetEntrySetReference> assetEntrySetReferences =
+				new ArrayList<AssetEntrySetReference>();
 
-			if (itr.hasNext()) {
-				Long count = itr.next();
+			Iterator<Object[]> itr = q.iterate();
 
-				if (count != null) {
-					return count.intValue();
-				}
+			while (itr.hasNext()) {
+				Object[] array = itr.next();
+
+				long sharedToClassNameId = GetterUtil.getLong(array[0]);
+				long sharedToClassPK = GetterUtil.getLong(array[1]);
+
+				assetEntrySetReferences.add(
+					new AssetEntrySetReference(
+						sharedToClassNameId, sharedToClassPK));
 			}
 
-			return 0;
+			return assetEntrySetReferences;
 		}
 		catch (Exception e) {
 			throw new SystemException(e);
@@ -106,147 +110,30 @@ public class AssetEntrySetFinderImpl
 		}
 	}
 
-	public int countByCCNI_ATN(
-			long creatorClassNameId, String assetTagName,
-			Map<Long, long[]> sharedToClassPKsMap)
+	public List<AssetEntrySet> findByCT_PAESI_CNI(
+			long classNameId, long classPK, long createTime,
+			boolean gtCreateTime, long parentAssetEntrySetId,
+			JSONArray sharedToJSONArray, String[] assetTagNames, int start,
+			int end)
 		throws SystemException {
+
+		if (((sharedToJSONArray == null) ||
+			 (sharedToJSONArray.length() == 0)) &&
+			ArrayUtil.isEmpty(assetTagNames)) {
+
+			return Collections.emptyList();
+		}
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			String sql = CustomSQLUtil.get(COUNT_BY_CCNI_ATN);
+			String sql = CustomSQLUtil.get(FIND_BY_CT_PAESI_CNI);
 
 			sql = StringUtil.replace(
-				sql, "[$SHARED_TO_CLASS_PKS_MAP]",
-				getSharedToClassPKsMap(sharedToClassPKsMap));
-
-			SQLQuery q = session.createSQLQuery(sql);
-
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
-
-			QueryPos qPos = QueryPos.getInstance(q);
-
-			qPos.add(creatorClassNameId);
-			qPos.add(assetTagName);
-			qPos.add(_ASSET_ENTRY_SET_CLASS_NAME_ID);
-
-			Iterator<Long> itr = q.iterate();
-
-			if (itr.hasNext()) {
-				Long count = itr.next();
-
-				if (count != null) {
-					return count.intValue();
-				}
-			}
-
-			return 0;
-		}
-		catch (Exception e) {
-			throw new SystemException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	public int countByCCNI_CCPK_ATN(
-			long creatorClassNameId, long creatorClassPK, String assetTagName,
-			Map<Long, long[]> sharedToClassPKsMap, boolean andOperator)
-		throws SystemException {
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			String sql = CustomSQLUtil.get(COUNT_BY_CCNI_CCPK_ATN);
-
-			sql = CustomSQLUtil.replaceAndOperator(sql, andOperator);
-
-			sql = StringUtil.replace(
-				sql, "[$SHARED_TO_CLASS_PKS_MAP]",
-				getSharedToClassPKsMap(sharedToClassPKsMap));
-
-			SQLQuery q = session.createSQLQuery(sql);
-
-			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
-
-			QueryPos qPos = QueryPos.getInstance(q);
-
-			qPos.add(creatorClassNameId);
-			qPos.add(creatorClassPK);
-			qPos.add(assetTagName);
-			qPos.add(_ASSET_ENTRY_SET_CLASS_NAME_ID);
-
-			Iterator<Long> itr = q.iterate();
-
-			if (itr.hasNext()) {
-				Long count = itr.next();
-
-				if (count != null) {
-					return count.intValue();
-				}
-			}
-
-			return 0;
-		}
-		catch (Exception e) {
-			throw new SystemException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	@Override
-	public List<AssetEntrySet> findBySharedToClassPKsMap(
-			Map<Long, long[]> sharedToClassPKsMap, int start, int end)
-		throws SystemException {
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			String sql = CustomSQLUtil.get(FIND_BY_SHARED_TO_CLASS_PKS_MAP);
-
-			sql = StringUtil.replace(
-				sql, "[$SHARED_TO_CLASS_PKS_MAP]",
-				getSharedToClassPKsMap(sharedToClassPKsMap));
-
-			SQLQuery q = session.createSQLQuery(sql);
-
-			q.addEntity("AssetEntrySet", AssetEntrySetImpl.class);
-
-			QueryPos qPos = QueryPos.getInstance(q);
-
-			qPos.add(_ASSET_ENTRY_SET_CLASS_NAME_ID);
-
-			return (List<AssetEntrySet>)QueryUtil.list(
-				q, getDialect(), start, end);
-		}
-		catch (Exception e) {
-			throw new SystemException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	public List<AssetEntrySet> findByCT_PASEI(
-			long createTime, boolean gtCreateTime, long parentAssetEntrySetId,
-			Map<Long, long[]> sharedToClassPKsMap, int start, int end)
-		throws SystemException {
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			String sql = CustomSQLUtil.get(FIND_BY_CT_PASEI);
+				sql, "[$JOIN_BY$]",
+				getJoinBy(sharedToJSONArray, assetTagNames));
 
 			if (gtCreateTime) {
 				sql = StringUtil.replace(
@@ -258,8 +145,12 @@ public class AssetEntrySetFinderImpl
 			}
 
 			sql = StringUtil.replace(
-				sql, "[$SHARED_TO_CLASS_PKS_MAP]",
-				getSharedToClassPKsMap(sharedToClassPKsMap));
+				sql, "[$SHARED_TO$]",
+				getSharedTo(classNameId, classPK, sharedToJSONArray));
+			sql = StringUtil.replace(
+				sql, "[$ASSET_TAG_NAMES$]",
+				getAssetTagNames(
+					classNameId, classPK, sharedToJSONArray, assetTagNames));
 
 			SQLQuery q = session.createSQLQuery(sql);
 
@@ -271,42 +162,7 @@ public class AssetEntrySetFinderImpl
 			qPos.add(parentAssetEntrySetId);
 			qPos.add(_ASSET_ENTRY_SET_CLASS_NAME_ID);
 
-			return (List<AssetEntrySet>)QueryUtil.list(
-				q, getDialect(), start, end);
-		}
-		catch (Exception e) {
-			throw new SystemException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	public List<AssetEntrySet> findByCCNI_ATN(
-			long creatorClassNameId, String assetTagName,
-			Map<Long, long[]> sharedToClassPKsMap, int start, int end)
-		throws SystemException {
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			String sql = CustomSQLUtil.get(FIND_BY_CCNI_ATN);
-
-			sql = StringUtil.replace(
-				sql, "[$SHARED_TO_CLASS_PKS_MAP]",
-				getSharedToClassPKsMap(sharedToClassPKsMap));
-
-			SQLQuery q = session.createSQLQuery(sql);
-
-			q.addEntity("AssetEntrySet", AssetEntrySetImpl.class);
-
-			QueryPos qPos = QueryPos.getInstance(q);
-
-			qPos.add(creatorClassNameId);
-			qPos.add(assetTagName);
-			qPos.add(_ASSET_ENTRY_SET_CLASS_NAME_ID);
+			setAssetTagNames(qPos, assetTagNames);
 
 			return (List<AssetEntrySet>)QueryUtil.list(
 				q, getDialect(), start, end);
@@ -319,79 +175,70 @@ public class AssetEntrySetFinderImpl
 		}
 	}
 
-	public List<AssetEntrySet> findByCCNI_CCPK_ATN(
-			long creatorClassNameId, long creatorClassPK, String assetTagName,
-			Map<Long, long[]> sharedToClassPKsMap, boolean andOperator,
-			int start, int end)
-		throws SystemException {
+	protected String getAssetTagNames(
+		long classNameId, long classPK, JSONArray sharedToJSONArray,
+		String[] assetTagNames) {
 
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			String sql = CustomSQLUtil.get(FIND_BY_CCNI_CCPK_ATN);
-
-			sql = CustomSQLUtil.replaceAndOperator(sql, andOperator);
-
-			sql = StringUtil.replace(
-				sql, "[$SHARED_TO_CLASS_PKS_MAP]",
-				getSharedToClassPKsMap(sharedToClassPKsMap));
-
-			SQLQuery q = session.createSQLQuery(sql);
-
-			q.addEntity("AssetEntrySet", AssetEntrySetImpl.class);
-
-			QueryPos qPos = QueryPos.getInstance(q);
-
-			qPos.add(creatorClassNameId);
-			qPos.add(creatorClassPK);
-			qPos.add(assetTagName);
-			qPos.add(_ASSET_ENTRY_SET_CLASS_NAME_ID);
-
-			return (List<AssetEntrySet>)QueryUtil.list(
-				q, getDialect(), start, end);
+		if (ArrayUtil.isEmpty(assetTagNames)) {
+			return StringPool.BLANK;
 		}
-		catch (Exception e) {
-			throw new SystemException(e);
+
+		StringBundler sb = new StringBundler(assetTagNames.length * 4);
+
+		if ((sharedToJSONArray != null) && (sharedToJSONArray.length() > 0)) {
+			sb.append(" OR ");
 		}
-		finally {
-			closeSession(session);
+
+		for (int i = 0; i < assetTagNames.length; i++) {
+			sb.append("((AssetTag.name = ?) AND ");
+			sb.append(getViewable(classNameId, classPK));
+			sb.append(StringPool.CLOSE_PARENTHESIS);
+			sb.append(" OR ");
 		}
-	}
 
-	protected String getSharedToClassPKs(
-		long sharedToClassNameId, long[] sharedToClassPKs) {
-
-		StringBundler sb = new StringBundler(7);
-
-		sb.append("(AssetSharingEntry.sharedToClassNameId = ");
-		sb.append(sharedToClassNameId);
-		sb.append(" AND (AssetSharingEntry.sharedToClassPK IN (");
-		sb.append(StringUtil.merge(sharedToClassPKs));
-		sb.append(StringPool.CLOSE_PARENTHESIS);
-		sb.append(StringPool.CLOSE_PARENTHESIS);
-		sb.append(StringPool.CLOSE_PARENTHESIS);
+		sb.setIndex(sb.index() - 1);
 
 		return sb.toString();
 	}
 
-	protected String getSharedToClassPKsMap(
-		Map<Long, long[]> sharedToClassPKsMap) {
+	protected String getJoinBy(
+		JSONArray sharedToJSONArray, String[] assetTagNames) {
+
+		String joinBy = StringPool.BLANK;
+
+		if ((sharedToJSONArray != null) && (sharedToJSONArray.length() > 0)) {
+			joinBy = CustomSQLUtil.get(JOIN_BY_ASSET_SHARING_ENTRY);
+		}
+
+		if (ArrayUtil.isNotEmpty(assetTagNames)) {
+			joinBy = joinBy + CustomSQLUtil.get(JOIN_BY_ASSET_TAG);
+		}
+
+		return joinBy;
+	}
+
+	protected String getSharedTo(
+		long classNameId, long classPK, JSONArray sharedToJSONArray) {
+
+		if ((sharedToJSONArray == null) || (sharedToJSONArray.length() == 0)) {
+			return StringPool.BLANK;
+		}
 
 		StringBundler sb = new StringBundler(
-			(sharedToClassPKsMap.size() * 2) + 2);
+			(sharedToJSONArray.length() * 2) + 2);
 
 		sb.append(StringPool.OPEN_PARENTHESIS);
 
-		for (Map.Entry<Long, long[]> entry : sharedToClassPKsMap.entrySet()) {
-			long[] sharedToClassPKs = entry.getValue();
+		for (int i = 0; i < sharedToJSONArray.length(); i++) {
+			JSONObject jsonObject = sharedToJSONArray.getJSONObject(i);
 
-			if (ArrayUtil.isEmpty(sharedToClassPKs)) {
-				continue;
-			}
+			long sharedToClassNameId = jsonObject.getLong("classNameId");
+			long sharedToClassPK = jsonObject.getLong("classPK");
 
-			sb.append(getSharedToClassPKs(entry.getKey(), sharedToClassPKs));
+			sb.append(
+				getSharedTo(
+					classNameId, classPK, sharedToClassNameId,
+					sharedToClassPK));
 			sb.append(" OR ");
 		}
 
@@ -400,6 +247,53 @@ public class AssetEntrySetFinderImpl
 		sb.append(StringPool.CLOSE_PARENTHESIS);
 
 		return sb.toString();
+	}
+
+	protected String getSharedTo(
+		long classNameId, long classPK, long sharedToClassNameId,
+		long sharedToClassPK) {
+
+		StringBundler sb = new StringBundler(8);
+
+		sb.append("((AssetSharingEntry2.sharedToClassNameId = ");
+		sb.append(sharedToClassNameId);
+		sb.append(") AND (AssetSharingEntry2.sharedToClassPK = ");
+		sb.append(sharedToClassPK);
+		sb.append(StringPool.CLOSE_PARENTHESIS);
+
+		if (!AssetEntrySetParticipantInfoUtil.isMember(
+				classNameId, classPK, sharedToClassNameId, sharedToClassPK)) {
+
+			sb.append(" AND ");
+			sb.append(getViewable(classNameId, classPK));
+		}
+
+		sb.append(StringPool.CLOSE_PARENTHESIS);
+
+		return sb.toString();
+	}
+
+	protected String getViewable(long classNameId, long classPK) {
+		StringBundler sb = new StringBundler(6);
+
+		sb.append("((AssetEntrySet.privateAssetEntrySet = [$FALSE$])");
+		sb.append(" OR ((AssetSharingEntry1.sharedToClassNameId = ");
+		sb.append(classNameId);
+		sb.append(") AND (AssetSharingEntry1.sharedToClassPK = ");
+		sb.append(classPK);
+		sb.append(")))");
+
+		return sb.toString();
+	}
+
+	protected void setAssetTagNames(QueryPos qPos, String[] assetTagNames) {
+		if (ArrayUtil.isEmpty(assetTagNames)) {
+			return;
+		}
+
+		for (String assetTagName : assetTagNames) {
+			qPos.add(StringUtil.toLowerCase(assetTagName));
+		}
 	}
 
 	private static final long _ASSET_ENTRY_SET_CLASS_NAME_ID =

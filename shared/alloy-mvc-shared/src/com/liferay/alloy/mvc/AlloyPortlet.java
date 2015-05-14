@@ -14,6 +14,7 @@
 
 package com.liferay.alloy.mvc;
 
+import com.liferay.alloy.mvc.jsonwebservice.AlloyControllerInvokerManager;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.messaging.MessageBusUtil;
@@ -93,6 +94,8 @@ public class AlloyPortlet extends GenericPortlet {
 				}
 			}
 		}
+
+		_alloyControllerInvokerManager.unregisterControllers();
 	}
 
 	@Override
@@ -110,6 +113,9 @@ public class AlloyPortlet extends GenericPortlet {
 		Router router = friendlyURLMapper.getRouter();
 
 		router.urlToParameters(HttpMethods.GET, _defaultRouteParameters);
+
+		_alloyControllerInvokerManager = new AlloyControllerInvokerManager(
+			liferayPortletConfig);
 	}
 
 	@Override
@@ -221,17 +227,29 @@ public class AlloyPortlet extends GenericPortlet {
 		}
 	}
 
-	protected void registerAlloyController(AlloyController alloyController) {
+	protected synchronized void registerAlloyController(
+		AlloyController alloyController) {
+
 		BaseAlloyControllerImpl baseAlloyControllerImpl =
 			(BaseAlloyControllerImpl)alloyController;
 
 		String controllerPath = baseAlloyControllerImpl.controllerPath;
 
-		_alloyControllers.put(controllerPath, baseAlloyControllerImpl);
+		if (!baseAlloyControllerImpl.equals(
+				_alloyControllers.get(controllerPath))) {
+
+			_alloyControllers.put(controllerPath, baseAlloyControllerImpl);
+
+			_alloyControllerInvokerManager.registerController(
+				baseAlloyControllerImpl.getThemeDisplay(), this,
+				baseAlloyControllerImpl.portlet, controllerPath,
+				baseAlloyControllerImpl.getClass());
+		}
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(AlloyPortlet.class);
 
+	private AlloyControllerInvokerManager _alloyControllerInvokerManager;
 	private Map<String, BaseAlloyControllerImpl> _alloyControllers =
 		new HashMap<String, BaseAlloyControllerImpl>();
 	private Map<String, String> _defaultRouteParameters =

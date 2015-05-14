@@ -33,6 +33,8 @@ public class SyncDLObjectSoap implements Serializable {
 
 		soapModel.setSyncDLObjectId(model.getSyncDLObjectId());
 		soapModel.setCompanyId(model.getCompanyId());
+		soapModel.setUserId(model.getUserId());
+		soapModel.setUserName(model.getUserName());
 		soapModel.setCreateTime(model.getCreateTime());
 		soapModel.setModifiedTime(model.getModifiedTime());
 		soapModel.setRepositoryId(model.getRepositoryId());
@@ -44,6 +46,7 @@ public class SyncDLObjectSoap implements Serializable {
 		soapModel.setChangeLog(model.getChangeLog());
 		soapModel.setExtraSettings(model.getExtraSettings());
 		soapModel.setVersion(model.getVersion());
+		soapModel.setVersionId(model.getVersionId());
 		soapModel.setSize(model.getSize());
 		soapModel.setChecksum(model.getChecksum());
 		soapModel.setEvent(model.getEvent());
@@ -119,6 +122,22 @@ public class SyncDLObjectSoap implements Serializable {
 
 	public void setCompanyId(long companyId) {
 		_companyId = companyId;
+	}
+
+	public long getUserId() {
+		return _userId;
+	}
+
+	public void setUserId(long userId) {
+		_userId = userId;
+	}
+
+	public String getUserName() {
+		return _userName;
+	}
+
+	public void setUserName(String userName) {
+		_userName = userName;
 	}
 
 	public long getCreateTime() {
@@ -209,6 +228,14 @@ public class SyncDLObjectSoap implements Serializable {
 		_version = version;
 	}
 
+	public long getVersionId() {
+		return _versionId;
+	}
+
+	public void setVersionId(long versionId) {
+		_versionId = versionId;
+	}
+
 	public long getSize() {
 		return _size;
 	}
@@ -283,6 +310,8 @@ public class SyncDLObjectSoap implements Serializable {
 
 	private long _syncDLObjectId;
 	private long _companyId;
+	private long _userId;
+	private String _userName;
 	private long _createTime;
 	private long _modifiedTime;
 	private long _repositoryId;
@@ -294,6 +323,7 @@ public class SyncDLObjectSoap implements Serializable {
 	private String _changeLog;
 	private String _extraSettings;
 	private String _version;
+	private long _versionId;
 	private long _size;
 	private String _checksum;
 	private String _event;

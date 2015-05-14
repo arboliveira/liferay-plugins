@@ -18,39 +18,14 @@ package com.liferay.asset.entry.set.service.persistence;
  * @author Brian Wing Shun Chan
  */
 public interface AssetEntrySetFinder {
-	public int countBySharedToClassPKsMap(
-		java.util.Map<java.lang.Long, long[]> sharedToClassPKsMap)
+	public java.util.List<com.liferay.asset.entry.set.model.AssetEntrySetReference> findAssetEntrySetReferenceByPAESI_CNI(
+		long parentAssetEntrySetId)
 		throws com.liferay.portal.kernel.exception.SystemException;
 
-	public int countByCCNI_ATN(long creatorClassNameId,
-		java.lang.String assetTagName,
-		java.util.Map<java.lang.Long, long[]> sharedToClassPKsMap)
-		throws com.liferay.portal.kernel.exception.SystemException;
-
-	public int countByCCNI_CCPK_ATN(long creatorClassNameId,
-		long creatorClassPK, java.lang.String assetTagName,
-		java.util.Map<java.lang.Long, long[]> sharedToClassPKsMap,
-		boolean andOperator)
-		throws com.liferay.portal.kernel.exception.SystemException;
-
-	public java.util.List<com.liferay.asset.entry.set.model.AssetEntrySet> findBySharedToClassPKsMap(
-		java.util.Map<java.lang.Long, long[]> sharedToClassPKsMap, int start,
-		int end) throws com.liferay.portal.kernel.exception.SystemException;
-
-	public java.util.List<com.liferay.asset.entry.set.model.AssetEntrySet> findByCT_PASEI(
-		long createTime, boolean gtCreateTime, long parentAssetEntrySetId,
-		java.util.Map<java.lang.Long, long[]> sharedToClassPKsMap, int start,
-		int end) throws com.liferay.portal.kernel.exception.SystemException;
-
-	public java.util.List<com.liferay.asset.entry.set.model.AssetEntrySet> findByCCNI_ATN(
-		long creatorClassNameId, java.lang.String assetTagName,
-		java.util.Map<java.lang.Long, long[]> sharedToClassPKsMap, int start,
-		int end) throws com.liferay.portal.kernel.exception.SystemException;
-
-	public java.util.List<com.liferay.asset.entry.set.model.AssetEntrySet> findByCCNI_CCPK_ATN(
-		long creatorClassNameId, long creatorClassPK,
-		java.lang.String assetTagName,
-		java.util.Map<java.lang.Long, long[]> sharedToClassPKsMap,
-		boolean andOperator, int start, int end)
+	public java.util.List<com.liferay.asset.entry.set.model.AssetEntrySet> findByCT_PAESI_CNI(
+		long classNameId, long classPK, long createTime, boolean gtCreateTime,
+		long parentAssetEntrySetId,
+		com.liferay.portal.kernel.json.JSONArray sharedToJSONArray,
+		java.lang.String[] assetTagNames, int start, int end)
 		throws com.liferay.portal.kernel.exception.SystemException;
 }

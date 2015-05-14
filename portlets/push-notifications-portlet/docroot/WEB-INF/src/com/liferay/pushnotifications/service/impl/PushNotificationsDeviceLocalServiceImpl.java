@@ -83,25 +83,16 @@ public class PushNotificationsDeviceLocalServiceImpl
 	}
 
 	@Override
-	public void sendPushNotification(JSONObject jsonObject)
+	public void sendPushNotification(
+			long[] toUserIds, JSONObject payloadJSONObject)
 		throws PortalException, SystemException {
 
-		sendPushNotification(0, jsonObject);
-	}
-
-	@Override
-	public void sendPushNotification(long toUserId, JSONObject jsonObject)
-		throws PortalException, SystemException {
-
-		for (Map.Entry<String, PushNotificationsSender> entry :
-				_pushNotificationsSenders.entrySet()) {
-
+		for (String platform : _pushNotificationsSenders.keySet()) {
 			List<String> tokens = new ArrayList<String>();
 
 			List<PushNotificationsDevice> pushNotificationsDevices =
-				getPushNotificationsDevices(
-					toUserId, entry.getKey(), QueryUtil.ALL_POS,
-					QueryUtil.ALL_POS);
+				pushNotificationsDevicePersistence.findByU_P(
+					toUserIds, platform, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 
 			for (PushNotificationsDevice pushNotificationsDevice :
 					pushNotificationsDevices) {
@@ -113,36 +104,36 @@ public class PushNotificationsDeviceLocalServiceImpl
 				continue;
 			}
 
-			PushNotificationsSender pushNotificationsSender = entry.getValue();
-
-			try {
-				pushNotificationsSender.send(tokens, jsonObject);
-			}
-			catch (PushNotificationsException pne) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(pne.getMessage());
-				}
-			}
-			catch (PortalException pe) {
-				throw pe;
-			}
-			catch (Exception e) {
-				throw new PortalException(e);
-			}
+			sendPushNotification(platform, tokens, payloadJSONObject);
 		}
 	}
 
-	protected List<PushNotificationsDevice> getPushNotificationsDevices(
-			long toUserId, String platform, int start, int end)
-		throws SystemException {
+	@Override
+	public void sendPushNotification(
+			String platform, List<String> tokens, JSONObject payloadJSONObject)
+		throws PortalException {
 
-		if (toUserId == 0) {
-			return pushNotificationsDevicePersistence.findByPlatform(
-				platform, start, end);
+		PushNotificationsSender pushNotificationsSender =
+			_pushNotificationsSenders.get(platform);
+
+		if (pushNotificationsSender == null) {
+			return;
 		}
 
-		return pushNotificationsDevicePersistence.findByU_P(
-			toUserId, platform, start, end);
+		try {
+			pushNotificationsSender.send(platform, tokens, payloadJSONObject);
+		}
+		catch (PushNotificationsException pne) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(pne.getMessage());
+			}
+		}
+		catch (PortalException pe) {
+			throw pe;
+		}
+		catch (Exception e) {
+			throw new PortalException(e);
+		}
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(

@@ -84,16 +84,17 @@ public class UpgradeSyncDLObject extends UpgradeProcess {
 					SyncDLObject fileEntrySyncDLObject =
 						SyncUtil.toSyncDLObject(dlFileEntry, event, true);
 
-					syncDLObjects.add(fileEntrySyncDLObject);
-
 					String type = fileEntrySyncDLObject.getType();
 
 					if (type.equals(SyncConstants.TYPE_PRIVATE_WORKING_COPY)) {
 						SyncDLObject approvedSyncDLObject =
-							SyncUtil.toSyncDLObject(dlFileEntry, event, true);
+							SyncUtil.toSyncDLObject(
+								dlFileEntry, event, true, true);
 
 						syncDLObjects.add(approvedSyncDLObject);
 					}
+
+					syncDLObjects.add(fileEntrySyncDLObject);
 				}
 				catch (NoSuchFileException nsfe) {
 					if (_log.isWarnEnabled()) {
@@ -149,14 +150,15 @@ public class UpgradeSyncDLObject extends UpgradeProcess {
 
 			for (SyncDLObject syncDLObject : syncDLObjects) {
 				SyncDLObjectLocalServiceUtil.addSyncDLObject(
-					syncDLObject.getCompanyId(), syncDLObject.getModifiedTime(),
+					syncDLObject.getCompanyId(), syncDLObject.getUserId(),
+					syncDLObject.getUserName(), syncDLObject.getModifiedTime(),
 					syncDLObject.getRepositoryId(),
 					syncDLObject.getParentFolderId(), syncDLObject.getName(),
 					syncDLObject.getExtension(), syncDLObject.getMimeType(),
 					syncDLObject.getDescription(), syncDLObject.getChangeLog(),
 					syncDLObject.getExtraSettings(), syncDLObject.getVersion(),
-					syncDLObject.getSize(), syncDLObject.getChecksum(),
-					syncDLObject.getEvent(),
+					syncDLObject.getVersionId(), syncDLObject.getSize(),
+					syncDLObject.getChecksum(), syncDLObject.getEvent(),
 					syncDLObject.getLockExpirationDate(),
 					syncDLObject.getLockUserId(),
 					syncDLObject.getLockUserName(), syncDLObject.getType(),

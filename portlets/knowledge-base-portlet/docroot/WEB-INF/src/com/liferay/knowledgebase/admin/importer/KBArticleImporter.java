@@ -21,6 +21,7 @@ import com.liferay.knowledgebase.model.KBArticleConstants;
 import com.liferay.knowledgebase.model.KBFolderConstants;
 import com.liferay.knowledgebase.service.KBArticleLocalServiceUtil;
 import com.liferay.knowledgebase.util.PortletPropsValues;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -53,13 +54,15 @@ import java.util.TreeMap;
 /**
  * @author James Hinkey
  * @author Sergio González
+ * @author Jesse Rao
  */
 public class KBArticleImporter {
 
 	public int processZipFile(
 			long userId, long groupId, long parentKBFolderId,
-			InputStream inputStream, ServiceContext serviceContext)
-		throws KBArticleImportException, SystemException {
+			boolean prioritizeByNumericalPrefix, InputStream inputStream,
+			ServiceContext serviceContext)
+		throws PortalException, SystemException {
 
 		if (inputStream == null) {
 			throw new KBArticleImportException("Input stream is null");
@@ -72,8 +75,8 @@ public class KBArticleImporter {
 			Map<String, String> metadata = getMetadata(zipReader);
 
 			return processKBArticleFiles(
-				userId, groupId, parentKBFolderId, zipReader, metadata,
-				serviceContext);
+				userId, groupId, parentKBFolderId, prioritizeByNumericalPrefix,
+				zipReader, metadata, serviceContext);
 		}
 		catch (IOException ioe) {
 			throw new KBArticleImportException(ioe);
@@ -84,7 +87,9 @@ public class KBArticleImporter {
 			long userId, long groupId, long parentKBFolderId,
 			long parentResourceClassNameId, long parentResourcePrimaryKey,
 			String markdown, String fileEntryName, ZipReader zipReader,
-			Map<String, String> metadata, ServiceContext serviceContext)
+			Map<String, String> metadata,
+			PrioritizationStrategy prioritizationStrategy,
+			ServiceContext serviceContext)
 		throws KBArticleImportException, SystemException {
 
 		if (Validator.isNull(markdown)) {
@@ -100,6 +105,12 @@ public class KBArticleImporter {
 		KBArticle kbArticle =
 			KBArticleLocalServiceUtil.fetchKBArticleByUrlTitle(
 				groupId, parentKBFolderId, urlTitle);
+
+		boolean newKBArticle = false;
+
+		if (kbArticle == null) {
+			newKBArticle = true;
+		}
 
 		try {
 			if (kbArticle == null) {
@@ -134,12 +145,22 @@ public class KBArticleImporter {
 					userId, kbArticle, zipReader,
 					new HashMap<String, FileEntry>());
 
-			return KBArticleLocalServiceUtil.updateKBArticle(
+			kbArticle = KBArticleLocalServiceUtil.updateKBArticle(
 				userId, kbArticle.getResourcePrimKey(),
 				kbArticleMarkdownConverter.getTitle(), html,
 				kbArticle.getDescription(),
 				kbArticleMarkdownConverter.getSourceURL(), null, null, null,
 				serviceContext);
+
+			if (newKBArticle) {
+				prioritizationStrategy.addKBArticle(kbArticle, fileEntryName);
+			}
+			else {
+				prioritizationStrategy.updateKBArticle(
+					kbArticle, fileEntryName);
+			}
+
+			return kbArticle;
 		}
 		catch (Exception e) {
 			StringBundler sb = new StringBundler(4);
@@ -154,12 +175,13 @@ public class KBArticleImporter {
 	}
 
 	protected Map<String, List<String>> getFolderNameFileEntryNamesMap(
-		ZipReader zipReader) {
+			ZipReader zipReader)
+		throws KBArticleImportException {
 
 		Map<String, List<String>> folderNameFileEntryNamesMap =
 			new TreeMap<String, List<String>>();
 
-		for (String zipEntry : zipReader.getEntries()) {
+		for (String zipEntry : _getEntries(zipReader)) {
 			String extension = FileUtil.getExtension(zipEntry);
 
 			if (!ArrayUtil.contains(
@@ -230,11 +252,15 @@ public class KBArticleImporter {
 
 	protected int processKBArticleFiles(
 			long userId, long groupId, long parentKBFolderId,
-			ZipReader zipReader, Map<String, String> metadata,
-			ServiceContext serviceContext)
-		throws KBArticleImportException, SystemException {
+			boolean prioritizeByNumericalPrefix, ZipReader zipReader,
+			Map<String, String> metadata, ServiceContext serviceContext)
+		throws PortalException, SystemException {
 
 		int importedKBArticleCount = 0;
+
+		PrioritizationStrategy prioritizationStrategy =
+			PrioritizationStrategy.create(
+				groupId, parentKBFolderId, prioritizeByNumericalPrefix);
 
 		Map<String, List<String>> folderNameFileEntryNamesMap =
 			getFolderNameFileEntryNamesMap(zipReader);
@@ -273,7 +299,7 @@ public class KBArticleImporter {
 					sectionResourceClassNameId, sectionResourcePrimaryKey,
 					zipReader.getEntryAsString(sectionIntroFileEntryName),
 					sectionIntroFileEntryName, zipReader, metadata,
-					serviceContext);
+					prioritizationStrategy, serviceContext);
 
 				sectionResourceClassNameId = PortalUtil.getClassNameId(
 					KBArticleConstants.getClassName());
@@ -291,7 +317,7 @@ public class KBArticleImporter {
 					if (_log.isWarnEnabled()) {
 						_log.warn(
 							"Missing Markdown in file entry " +
-								sectionFileEntryName);
+							sectionFileEntryName);
 					}
 				}
 
@@ -299,13 +325,27 @@ public class KBArticleImporter {
 					userId, groupId, parentKBFolderId,
 					sectionResourceClassNameId, sectionResourcePrimaryKey,
 					sectionMarkdown, sectionFileEntryName, zipReader, metadata,
-					serviceContext);
+					prioritizationStrategy, serviceContext);
 
 				importedKBArticleCount++;
 			}
 		}
 
+		prioritizationStrategy.prioritizeKBArticles();
+
 		return importedKBArticleCount;
+	}
+
+	private List<String> _getEntries(ZipReader zipReader)
+		throws KBArticleImportException {
+
+		try {
+			return zipReader.getEntries();
+		}
+		catch (NullPointerException npe) {
+			throw new KBArticleImportException(
+				"The uploaded file is not a ZIP archive or it is corrupted");
+		}
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(KBArticleImporter.class);

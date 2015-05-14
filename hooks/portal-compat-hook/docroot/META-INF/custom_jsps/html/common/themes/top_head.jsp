@@ -44,7 +44,7 @@ if (!themeDisplay.isSignedIn() && layout.isPublicLayout()) {
 	%>
 
 			<c:if test="<%= availableLocale.equals(LocaleUtil.getDefault()) %>">
-				<link href="<%= canonicalURL %>" hreflang="x-default" rel="alternate" />
+				<link href="<%= HtmlUtil.escapeAttribute(canonicalURL) %>" hreflang="x-default" rel="alternate" />
 			</c:if>
 
 			<link href="<%= HtmlUtil.escapeAttribute(PortalUtil.getAlternateURL(canonicalURL, themeDisplay, availableLocale, layout)) %>" hreflang="<%= LocaleUtil.toW3cLanguageId(availableLocale) %>" rel="alternate" />
@@ -90,7 +90,7 @@ if (layout != null) {
 			}
 		}
 	}
-	else if (layout.isTypePortlet()) {
+	else if (layout.isTypeEmbedded() || layout.isTypePortlet()) {
 		portlets = layoutTypePortlet.getAllPortlets();
 
 		if (themeDisplay.isStateMaximized() || themeDisplay.isStatePopUp()) {
@@ -164,7 +164,7 @@ StringBundler pageTopSB = OutputTag.getData(request, WebKeys.PAGE_TOP);
 
 <c:if test="<%= (layout != null) && Validator.isNotNull(layout.getCssText()) %>">
 	<style type="text/css">
-		<%= layout.getCssText() %>
+		<%= _escapeCssBlock(layout.getCssText()) %>
 	</style>
 </c:if>
 

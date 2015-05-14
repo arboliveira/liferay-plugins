@@ -37,6 +37,8 @@ import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
+import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.zip.ZipReader;
 import com.liferay.portal.kernel.zip.ZipReaderFactoryUtil;
 import com.liferay.portal.model.Group;
@@ -44,7 +46,9 @@ import com.liferay.portal.model.Organization;
 import com.liferay.portal.model.Repository;
 import com.liferay.portal.model.User;
 import com.liferay.portal.security.ac.AccessControlled;
+import com.liferay.portal.security.auth.CompanyThreadLocal;
 import com.liferay.portal.security.permission.ActionKeys;
+import com.liferay.portal.security.permission.InlineSQLHelperUtil;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.util.comparator.GroupNameComparator;
@@ -67,7 +71,6 @@ import com.liferay.sync.util.JSONWebServiceActionParametersMap;
 import com.liferay.sync.util.PortletPropsKeys;
 import com.liferay.sync.util.PortletPropsValues;
 import com.liferay.sync.util.SyncUtil;
-import com.liferay.util.portlet.PortletProps;
 
 import java.io.File;
 import java.io.InputStream;
@@ -75,12 +78,10 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-
-import javax.portlet.PortletPreferences;
 
 import jodd.bean.BeanUtil;
 
@@ -100,7 +101,13 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 		throws PortalException, SystemException {
 
 		try {
-			SyncUtil.checkSyncEnabled(repositoryId);
+			Group group = groupLocalService.getGroup(repositoryId);
+
+			SyncUtil.checkSyncEnabled(group.getGroupId());
+
+			if (serviceContext.getGroupPermissions() == null) {
+				SyncUtil.setFilePermissions(group, false, serviceContext);
+			}
 
 			FileEntry fileEntry = dlAppService.addFileEntry(
 				repositoryId, folderId, sourceFileName, mimeType, title,
@@ -137,7 +144,13 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 		throws PortalException, SystemException {
 
 		try {
-			SyncUtil.checkSyncEnabled(repositoryId);
+			Group group = groupLocalService.getGroup(repositoryId);
+
+			SyncUtil.checkSyncEnabled(group.getGroupId());
+
+			if (serviceContext.getGroupPermissions() == null) {
+				SyncUtil.setFilePermissions(group, true, serviceContext);
+			}
 
 			Folder folder = dlAppService.addFolder(
 				repositoryId, parentFolderId, name, description,
@@ -261,7 +274,14 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 
 			repositoryService.checkRepository(repositoryId);
 
-			return syncDLObjectFinder.filterFindByC_R(companyId, repositoryId);
+			List<SyncDLObject> syncDLObjects =
+				syncDLObjectFinder.filterFindByC_R(companyId, repositoryId);
+
+			if (!InlineSQLHelperUtil.isEnabled(repositoryId)) {
+				return checkSyncDLObjects(syncDLObjects);
+			}
+
+			return syncDLObjects;
 		}
 		catch (PortalException pe) {
 			throw new PortalException(SyncUtil.buildExceptionMessage(pe), pe);
@@ -447,36 +467,6 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 		return syncDLObjectLocalService.getLatestModifiedTime();
 	}
 
-	@Override
-	public PortletPreferences getPortletPreferences()
-		throws PortalException, SystemException {
-
-		User user = getUser();
-
-		PortletPreferences portletPreferences = PrefsPropsUtil.getPreferences(
-			user.getCompanyId());
-
-		Properties properties = PortletProps.getProperties();
-
-		for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-			String key = String.valueOf(entry.getKey());
-			String value = String.valueOf(entry.getValue());
-
-			if (portletPreferences.getValue(key, null) != null) {
-				continue;
-			}
-
-			try {
-				portletPreferences.setValue(key, value);
-			}
-			catch (Exception e) {
-				_log.error(e, e);
-			}
-		}
-
-		return portletPreferences;
-	}
-
 	@AccessControlled(guestAccessEnabled = true)
 	@Override
 	public SyncContext getSyncContext()
@@ -487,10 +477,32 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 
 			SyncContext syncContext = new SyncContext();
 
-			String authType = PropsUtil.get(
-				PropsKeys.COMPANY_SECURITY_AUTH_TYPE);
+			String authType = PrefsPropsUtil.getString(
+				CompanyThreadLocal.getCompanyId(),
+				PropsKeys.COMPANY_SECURITY_AUTH_TYPE,
+				PropsUtil.get(PropsKeys.COMPANY_SECURITY_AUTH_TYPE));
 
 			syncContext.setAuthType(authType);
+
+			boolean oAuthEnabled = PrefsPropsUtil.getBoolean(
+				user.getCompanyId(), PortletPropsKeys.SYNC_OAUTH_ENABLED,
+				PortletPropsValues.SYNC_OAUTH_ENABLED);
+
+			if (oAuthEnabled) {
+				String oAuthConsumerKey = PrefsPropsUtil.getString(
+					user.getCompanyId(),
+					PortletPropsKeys.SYNC_OAUTH_CONSUMER_KEY);
+
+				syncContext.setOAuthConsumerKey(oAuthConsumerKey);
+
+				String oAuthConsumerSecret = PrefsPropsUtil.getString(
+					user.getCompanyId(),
+					PortletPropsKeys.SYNC_OAUTH_CONSUMER_SECRET);
+
+				syncContext.setOAuthConsumerSecret(oAuthConsumerSecret);
+			}
+
+			syncContext.setOAuthEnabled(oAuthEnabled);
 
 			PluginPackage syncWebPluginPackage =
 				DeployManagerUtil.getInstalledPluginPackage("sync-web");
@@ -548,6 +560,10 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 			List<SyncDLObject> syncDLObjects =
 				syncDLObjectFinder.filterFindByC_M_R_P(
 					companyId, lastAccessTime, repositoryId, -1);
+
+			if (!InlineSQLHelperUtil.isEnabled(repositoryId)) {
+				syncDLObjects = checkSyncDLObjects(syncDLObjects);
+			}
 
 			for (SyncDLObject syncDLObject : syncDLObjects) {
 				if (syncDLObject.getModifiedTime() > lastAccessTime) {
@@ -660,7 +676,13 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 				}
 			}
 
-			groups.add(user.getGroup());
+			if (PrefsPropsUtil.getBoolean(
+					user.getCompanyId(),
+					PortletPropsKeys.SYNC_ALLOW_USER_PERSONAL_SITES,
+					PortletPropsValues.SYNC_ALLOW_USER_PERSONAL_SITES)) {
+
+				groups.add(user.getGroup());
+			}
 
 			Collections.sort(groups, new GroupNameComparator());
 
@@ -768,7 +790,7 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 
 	@Override
 	public SyncDLObject patchFileEntry(
-			long fileEntryId, String sourceVersion, String sourceFileName,
+			long fileEntryId, long sourceVersionId, String sourceFileName,
 			String mimeType, String title, String description, String changeLog,
 			boolean majorVersion, File deltaFile, String checksum,
 			ServiceContext serviceContext)
@@ -781,8 +803,11 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 
 			SyncUtil.checkSyncEnabled(fileEntry.getGroupId());
 
+			DLFileVersion dlFileVersion =
+				dlFileVersionLocalService.getDLFileVersion(sourceVersionId);
+
 			File sourceFile = dlFileEntryLocalService.getFile(
-				getUserId(), fileEntryId, sourceVersion, false);
+				getUserId(), fileEntryId, dlFileVersion.getVersion(), false);
 
 			patchedFile = FileUtil.createTempFile();
 
@@ -793,17 +818,14 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 				changeLog, majorVersion, patchedFile, checksum, serviceContext);
 
 			if (PortletPropsValues.SYNC_FILE_DIFF_CACHE_ENABLED &&
-				!sourceVersion.equals(syncDLObject.getVersion())) {
+				(sourceVersionId != syncDLObject.getVersionId())) {
 
-				DLFileVersion sourceDLFileVersion =
-					dlFileVersionLocalService.getFileVersion(
-						fileEntryId, sourceVersion);
 				DLFileVersion targetDLFileVersion =
 					dlFileVersionLocalService.getFileVersion(
-						fileEntryId, syncDLObject.getVersion());
+						syncDLObject.getVersionId());
 
 				syncDLFileVersionDiffLocalService.addSyncDLFileVersionDiff(
-					fileEntryId, sourceDLFileVersion.getFileVersionId(),
+					fileEntryId, sourceVersionId,
 					targetDLFileVersion.getFileVersionId(), deltaFile);
 			}
 
@@ -893,7 +915,15 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 							jsonWebServiceActionParametersMap));
 				}
 				catch (Exception e) {
-					String json = "{\"exception\": \"" + e.getMessage() + "\"}";
+					String message = e.getMessage();
+
+					if (!message.startsWith(StringPool.QUOTE) &&
+						!message.endsWith(StringPool.QUOTE)) {
+
+						message = StringUtil.quote(message, StringPool.QUOTE);
+					}
+
+					String json = "{\"exception\": " + message + "}";
 
 					responseMap.put(zipFileId, json);
 				}
@@ -975,6 +1005,32 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 		return syncDLObject;
 	}
 
+	protected List<SyncDLObject> checkSyncDLObjects(
+		List<SyncDLObject> syncDLObjects) {
+
+		Iterator<SyncDLObject> iterator = syncDLObjects.iterator();
+
+		while (iterator.hasNext()) {
+			SyncDLObject syncDLObject = iterator.next();
+
+			String type = syncDLObject.getType();
+
+			try {
+				if (type.equals(SyncConstants.TYPE_FILE)) {
+					dlAppService.getFileEntry(syncDLObject.getTypePK());
+				}
+				else {
+					dlAppService.getFolder(syncDLObject.getTypePK());
+				}
+			}
+			catch (Exception e) {
+				iterator.remove();
+			}
+		}
+
+		return syncDLObjects;
+	}
+
 	protected Map<String, String> getPortletPreferencesMap()
 		throws PortalException, SystemException {
 
@@ -1010,6 +1066,10 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 		List<SyncDLObject> curSyncDLObjects =
 			syncDLObjectFinder.filterFindByC_M_R_P(
 				companyId, lastAccessTime, repositoryId, parentFolderId);
+
+		if (!InlineSQLHelperUtil.isEnabled(repositoryId)) {
+			curSyncDLObjects = checkSyncDLObjects(curSyncDLObjects);
+		}
 
 		syncDLObjects.addAll(curSyncDLObjects);
 
@@ -1153,8 +1213,8 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 		else if (urlPath.endsWith("/patch-file-entry")) {
 			long fileEntryId = MapUtil.getLong(
 				jsonWebServiceActionParametersMap, "fileEntryId");
-			String sourceVersion = MapUtil.getString(
-				jsonWebServiceActionParametersMap, "sourceVersion");
+			long sourceVersionId = MapUtil.getLong(
+				jsonWebServiceActionParametersMap, "sourceVersionId");
 			String sourceFileName = MapUtil.getString(
 				jsonWebServiceActionParametersMap, "sourceFileName");
 			String mimeType = MapUtil.getString(
@@ -1180,9 +1240,9 @@ public class SyncDLObjectServiceImpl extends SyncDLObjectServiceBaseImpl {
 					jsonWebServiceActionParametersMap, "checksum");
 
 				return patchFileEntry(
-					fileEntryId, sourceVersion, sourceFileName, mimeType, title,
-					description, changeLog, majorVersion, tempFile, checksum,
-					serviceContext);
+					fileEntryId, sourceVersionId, sourceFileName, mimeType,
+					title, description, changeLog, majorVersion, tempFile,
+					checksum, serviceContext);
 			}
 			finally {
 				FileUtil.delete(tempFile);

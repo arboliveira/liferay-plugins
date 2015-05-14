@@ -21,65 +21,23 @@ import com.liferay.portal.kernel.util.ReferenceRegistry;
  * @author Brian Wing Shun Chan
  */
 public class AssetEntrySetFinderUtil {
-	public static int countBySharedToClassPKsMap(
-		java.util.Map<java.lang.Long, long[]> sharedToClassPKsMap)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getFinder().countBySharedToClassPKsMap(sharedToClassPKsMap);
-	}
-
-	public static int countByCCNI_ATN(long creatorClassNameId,
-		java.lang.String assetTagName,
-		java.util.Map<java.lang.Long, long[]> sharedToClassPKsMap)
+	public static java.util.List<com.liferay.asset.entry.set.model.AssetEntrySetReference> findAssetEntrySetReferenceByPAESI_CNI(
+		long parentAssetEntrySetId)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getFinder()
-				   .countByCCNI_ATN(creatorClassNameId, assetTagName,
-			sharedToClassPKsMap);
+				   .findAssetEntrySetReferenceByPAESI_CNI(parentAssetEntrySetId);
 	}
 
-	public static int countByCCNI_CCPK_ATN(long creatorClassNameId,
-		long creatorClassPK, java.lang.String assetTagName,
-		java.util.Map<java.lang.Long, long[]> sharedToClassPKsMap,
-		boolean andOperator)
+	public static java.util.List<com.liferay.asset.entry.set.model.AssetEntrySet> findByCT_PAESI_CNI(
+		long classNameId, long classPK, long createTime, boolean gtCreateTime,
+		long parentAssetEntrySetId,
+		com.liferay.portal.kernel.json.JSONArray sharedToJSONArray,
+		java.lang.String[] assetTagNames, int start, int end)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getFinder()
-				   .countByCCNI_CCPK_ATN(creatorClassNameId, creatorClassPK,
-			assetTagName, sharedToClassPKsMap, andOperator);
-	}
-
-	public static java.util.List<com.liferay.asset.entry.set.model.AssetEntrySet> findBySharedToClassPKsMap(
-		java.util.Map<java.lang.Long, long[]> sharedToClassPKsMap, int start,
-		int end) throws com.liferay.portal.kernel.exception.SystemException {
-		return getFinder()
-				   .findBySharedToClassPKsMap(sharedToClassPKsMap, start, end);
-	}
-
-	public static java.util.List<com.liferay.asset.entry.set.model.AssetEntrySet> findByCT_PASEI(
-		long createTime, boolean gtCreateTime, long parentAssetEntrySetId,
-		java.util.Map<java.lang.Long, long[]> sharedToClassPKsMap, int start,
-		int end) throws com.liferay.portal.kernel.exception.SystemException {
-		return getFinder()
-				   .findByCT_PASEI(createTime, gtCreateTime,
-			parentAssetEntrySetId, sharedToClassPKsMap, start, end);
-	}
-
-	public static java.util.List<com.liferay.asset.entry.set.model.AssetEntrySet> findByCCNI_ATN(
-		long creatorClassNameId, java.lang.String assetTagName,
-		java.util.Map<java.lang.Long, long[]> sharedToClassPKsMap, int start,
-		int end) throws com.liferay.portal.kernel.exception.SystemException {
-		return getFinder()
-				   .findByCCNI_ATN(creatorClassNameId, assetTagName,
-			sharedToClassPKsMap, start, end);
-	}
-
-	public static java.util.List<com.liferay.asset.entry.set.model.AssetEntrySet> findByCCNI_CCPK_ATN(
-		long creatorClassNameId, long creatorClassPK,
-		java.lang.String assetTagName,
-		java.util.Map<java.lang.Long, long[]> sharedToClassPKsMap,
-		boolean andOperator, int start, int end)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getFinder()
-				   .findByCCNI_CCPK_ATN(creatorClassNameId, creatorClassPK,
-			assetTagName, sharedToClassPKsMap, andOperator, start, end);
+				   .findByCT_PAESI_CNI(classNameId, classPK, createTime,
+			gtCreateTime, parentAssetEntrySetId, sharedToJSONArray,
+			assetTagNames, start, end);
 	}
 
 	public static AssetEntrySetFinder getFinder() {

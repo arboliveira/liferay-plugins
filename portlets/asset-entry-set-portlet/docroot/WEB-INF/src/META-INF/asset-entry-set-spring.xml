@@ -12,4 +12,14 @@
 			<bean class="com.liferay.asset.entry.set.service.permission.AssetEntrySetPermissionImpl" />
 		</property>
 	</bean>
+	<bean id="com.liferay.asset.entry.set.util.AssetEntrySetParticipantInfoUtil" class="com.liferay.asset.entry.set.util.AssetEntrySetParticipantInfoUtil">
+		<property name="AssetEntrySetParticipantInfo">
+			<bean class="com.liferay.asset.entry.set.util.AssetEntrySetParticipantInfoImpl" />
+		</property>
+	</bean>
+	<bean id="com.liferay.asset.entry.set.util.AssetEntrySetPayloadProcessorUtil" class="com.liferay.asset.entry.set.util.AssetEntrySetPayloadProcessorUtil">
+		<property name="AssetEntrySetPayloadProcessor">
+			<bean class="com.liferay.asset.entry.set.util.AssetEntrySetPayloadProcessorImpl" />
+		</property>
+	</bean>
 </beans>

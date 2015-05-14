@@ -960,6 +960,14 @@ AUI.add(
 						}
 					},
 
+					syncUI: function() {
+						var instance = this;
+
+						Liferay.SchedulerEvent.superclass.syncUI.apply(instance, arguments);
+
+						instance._uiSetStatus(instance.get('status'));
+					},
+
 					_onLoadingChange: function(event) {
 						var instance = this;
 
@@ -1233,9 +1241,6 @@ AUI.add(
 						var instance = this;
 
 						Scheduler.superclass.renderUI.apply(this, arguments);
-
-						instance.navDateNode.replaceClass('hidden-phone', 'hidden');
-						instance.viewDateNode.removeClass('visible-phone');
 
 						var showAddEventBtn = instance.get('showAddEventBtn');
 

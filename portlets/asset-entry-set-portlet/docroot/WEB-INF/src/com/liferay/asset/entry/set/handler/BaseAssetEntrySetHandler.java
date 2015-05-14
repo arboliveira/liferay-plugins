@@ -14,13 +14,16 @@
 
 package com.liferay.asset.entry.set.handler;
 
+import com.liferay.asset.entry.set.model.AssetEntrySet;
+import com.liferay.asset.entry.set.service.AssetEntrySetLocalServiceUtil;
 import com.liferay.asset.entry.set.util.AssetEntrySetConstants;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.util.Validator;
 
-import java.io.File;
+import java.util.Iterator;
 
 /**
  * @author Calvin Keum
@@ -37,10 +40,22 @@ public class BaseAssetEntrySetHandler implements AssetEntrySetHandler {
 	}
 
 	@Override
-	public JSONObject interpret(JSONObject payloadJSONObject, File file)
+	public JSONObject interpret(
+			JSONObject payloadJSONObject, long assetEntrySetId)
 		throws PortalException, SystemException {
 
 		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+
+		AssetEntrySet assetEntrySet =
+			AssetEntrySetLocalServiceUtil.fetchAssetEntrySet(assetEntrySetId);
+
+		if ((assetEntrySet != null) &&
+			isContentModified(
+				JSONFactoryUtil.createJSONObject(assetEntrySet.getPayload()),
+				payloadJSONObject)) {
+
+			jsonObject.put("contentModifiedTime", System.currentTimeMillis());
+		}
 
 		jsonObject.put("linkData", payloadJSONObject.getString("linkData"));
 		jsonObject.put("message", payloadJSONObject.getString("message"));
@@ -56,6 +71,32 @@ public class BaseAssetEntrySetHandler implements AssetEntrySetHandler {
 				AssetEntrySetConstants.PAYLOAD_KEY_SHARED_TO));
 
 		return jsonObject;
+	}
+
+	protected boolean isContentModified(
+		JSONObject oldPayloadJSONObject, JSONObject newPayloadJSONObject) {
+
+		Iterator<String> keys = oldPayloadJSONObject.keys();
+
+		while (keys.hasNext()) {
+			String key = keys.next();
+
+			if (key.equals(
+					AssetEntrySetConstants.PAYLOAD_KEY_ASSET_TAG_NAMES) ||
+				key.equals(AssetEntrySetConstants.PAYLOAD_KEY_SHARED_TO)) {
+
+				continue;
+			}
+
+			String oldValue = oldPayloadJSONObject.getString(key);
+			String newValue = newPayloadJSONObject.getString(key);
+
+			if (!Validator.equals(oldValue, newValue)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	protected void setPortletId(String portletId) {

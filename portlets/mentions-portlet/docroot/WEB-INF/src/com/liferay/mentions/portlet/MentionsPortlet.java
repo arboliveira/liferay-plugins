@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.User;
 import com.liferay.portal.theme.ThemeDisplay;
@@ -103,8 +104,20 @@ public class MentionsPortlet extends MVCPortlet {
 			JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
 
 			jsonObject.put("fullName", user.getFullName());
+
+			String mention = "@" + user.getScreenName();
+
+			String profileURL = user.getDisplayURL(themeDisplay);
+
+			if (Validator.isNotNull(profileURL)) {
+				mention =
+					"<a href=\"" + profileURL + "\">@" + user.getScreenName() +
+						"</a>";
+			}
+
+			jsonObject.put("mention", mention);
+
 			jsonObject.put("portraitURL", user.getPortraitURL(themeDisplay));
-			jsonObject.put("profileURL", user.getDisplayURL(themeDisplay));
 			jsonObject.put("screenName", user.getScreenName());
 
 			jsonArray.put(jsonObject);

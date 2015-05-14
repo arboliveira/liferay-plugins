@@ -80,17 +80,17 @@
 		<fileset dir="${app.server.lib.portal.dir}" excludes="ant.jar" includes="*.jar" />
 	</path>
 
-	<path id="classpath.aQute.bnd">
-		<fileset dir="${sdk.dir}/dependencies/aQute.bnd/lib" includes="*.jar" />
-	</path>
-
-	<taskdef classpathref="classpath.aQute.bnd" resource="aQute/bnd/ant/taskdef.properties" />
-
 	<path id="classpath.com.liferay.ant.bnd">
 		<fileset dir="${sdk.dir}/dependencies/com.liferay.ant.bnd/lib" includes="*.jar" />
 	</path>
 
 	<taskdef classname="com.liferay.ant.bnd.BaselineJarTask" classpathref="classpath.com.liferay.ant.bnd" name="baseline-jar" />
+	<taskdef classname="com.liferay.ant.bnd.ReleaseToRepoTask" classpathref="classpath.com.liferay.ant.bnd" name="release-to-repo" />
+	<taskdef classpathref="classpath.com.liferay.ant.bnd" resource="aQute/bnd/ant/taskdef.properties" />
+
+	<path id="classpath.net.sourceforge.pmd">
+		<fileset dir="${sdk.dir}/dependencies/net.sourceforge.pmd/lib" includes="*.jar" />
+	</path>
 
 	<path id="classpath.org.codehaus.groovy">
 		<fileset dir="${sdk.dir}/dependencies/org.codehaus.groovy/lib" includes="*.jar" />
@@ -155,29 +155,9 @@ Error-Prone was automatically installed. Please rerun your task.
 		</else>
 	</if>
 
-	<macrodef name="baseline-jar-macro">
-		<attribute name="module.dir" />
-
-		<sequential>
-			<manifest-helper />
-
-			<bndexpand propertyfile="@{bndRootFile}" />
-
-			<baseline-jar
-				bndRootFile="${sdk.dir}/common.bnd"
-				file="@{module.dir}/bnd.bnd"
-				outputPath="${plugin.file}"
-				sourcePath="@{module.dir}"
-			>
-				<classpath>
-					<pathelement location="${plugin.classes.dir}" />
-				</classpath>
-			</baseline-jar>
-		</sequential>
-	</macrodef>
-
 	<macrodef name="build-css">
 		<attribute name="module.dir" />
+		<attribute default="${module.dir.unix}/docroot" name="sass.docroot.dir" />
 
 		<sequential>
 			<java
@@ -189,7 +169,7 @@ Error-Prone was automatically installed. Please rerun your task.
 			>
 				<jvmarg value="-Dliferay.lib.portal.dir=${app.server.lib.portal.dir}" />
 				<arg value="sass.dir=/" />
-				<arg value="sass.docroot.dir=${module.dir.unix}/docroot" />
+				<arg value="sass.docroot.dir=@{sass.docroot.dir}" />
 				<arg value="sass.portal.common.dir=${app.server.portal.dir}/html/css/common" />
 			</java>
 
@@ -204,75 +184,153 @@ Error-Prone was automatically installed. Please rerun your task.
 		</sequential>
 	</macrodef>
 
-	<macrodef name="gradle-execute">
-		<attribute name="task" />
- 
-		<sequential>
-			<if>
-				<os family="unix" />
-				<then>
-					<property name="gradlew.suffix" value="" />
+	<macrodef name="build-db">
+		<attribute name="module.dir" />
 
-					<chmod file="${sdk.dir}/tools/gradle/gradlew${gradlew.suffix}" perm="a+x" />
-				</then>
-				<else>
-					<property name="gradlew.suffix" value=".bat" />
-				</else>
-			</if>
- 
-			<exec executable="${sdk.dir}/tools/gradle/gradlew${gradlew.suffix}" failonerror="true">
-				<arg value="-PpluginsExcludes=${plugins.excludes}" />
-				<arg value="-PpluginsIncludes=${plugins.includes}" />
-				<arg value="@{task}" />
-			</exec>
+		<sequential>
+			<java
+				classname="com.liferay.portal.tools.DBBuilder"
+				classpathref="portal.classpath"
+				fork="true"
+				maxmemory="384m"
+				newenvironment="true"
+			>
+				<arg value="-Dexternal-properties=com/liferay/portal/tools/dependencies/portal-tools.properties" />
+				<arg value="db.database.name=${database.name}" />
+				<arg value="db.database.types=${database.types}" />
+				<arg value="db.sql.dir=@{module.dir}/docroot/WEB-INF/sql" />
+			</java>
+
+			<delete file="velocity.log" quiet="true" />
 		</sequential>
 	</macrodef>
 
-	<macrodef name="loop-macrodef-or-target">
-		<attribute name="module.dirs" />
-		<attribute name="target.name" />
+	<macrodef name="build-wsdl">
+		<attribute name="module.dir" />
 
 		<sequential>
-			<var name="module.dirs" value="@{module.dirs}" />
-			<var name="target.name" value="@{target.name}" />
+			<for param="wsdl.full.path">
+				<path>
+					<fileset dir="@{module.dir}" includes="docroot/WEB-INF/wsdl/*.wsdl,wsdl/*.wsdl" />
+				</path>
+				<sequential>
+					<tstamp>
+						<format property="tstamp.value" pattern="yyyyMMddkkmmssSSS" />
+					</tstamp>
 
-			<groovy>
-				<![CDATA[
-					targetName = properties["target.name"]
+					<mkdir dir="${tstamp.value}" />
 
-					if ((properties["target.name"] == "jar") ||
-						(properties["target.name"] == "javadoc") ||
-						(properties["target.name"] == "war")) {
+					<taskdef classpathref="portal.classpath" resource="axis-tasks.properties" />
 
-						macrodefName = properties["target.name"] + "-macro"
-					}
-					else {
-						macrodefName = properties["target.name"]
-					}
+					<axis-wsdl2java
+						output="${tstamp.value}"
+						url="@{wsdl.full.path}"
+					/>
 
-					moduleDirs = "${properties["module.dirs"]}".split(",")
+					<compile-java
+						javac.classpathref="plugin.classpath"
+						javac.destdir="${tstamp.value}"
+						javac.srcdir="${tstamp.value}"
+						module.dir="@{module.dir}"
+					/>
 
-					for (moduleDir in moduleDirs) {
-						File buildXml = new File(moduleDir + "/build.xml")
+					<antelope:stringutil string="@{wsdl.full.path}" property="wsdl.name.beginindex">
+						<antelope:lastindexof string="${file.separator}" />
+					</antelope:stringutil>
 
-						if (buildXml.exists()) {
-							String buildXmlContent = buildXml.text
+					<antelope:math
+						datatype="int"
+						operand1="${wsdl.name.beginindex}"
+						operand2="1"
+						operation="+"
+						result="wsdl.name.beginindex"
+					/>
 
-							ant."set-module-properties"("module.dir": moduleDir)
+					<antelope:stringutil string="@{wsdl.full.path}" property="wsdl.name.endindex">
+						<antelope:lastindexof string="." />
+					</antelope:stringutil>
 
-							if (buildXmlContent =~ "<target name=\"" + targetName + "\"") {
-								ant.ant(dir: moduleDir, target: targetName)
-							}
-							else {
-								ant."${macrodefName}"("module.dir": moduleDir)
-							}
-						}
-						else {
-							println "Skipping " + moduleDir + " because it does not have a build.xml file."
-						}
-					}
-				]]>
-			</groovy>
+					<antelope:stringutil string="@{wsdl.full.path}" property="wsdl.name">
+						<antelope:substring beginindex="${wsdl.name.beginindex}" endindex="${wsdl.name.endindex}" />
+					</antelope:stringutil>
+
+					<if>
+						<available file="@{module.dir}/docroot/WEB-INF/lib" />
+						<then>
+							<jar
+								basedir="${tstamp.value}"
+								jarfile="@{module.dir}/docroot/WEB-INF/lib/${wsdl.name}-ws.jar"
+							/>
+						</then>
+						<else>
+							<jar
+								basedir="${tstamp.value}"
+								jarfile="@{module.dir}/lib/${wsdl.name}-ws.jar"
+							/>
+						</else>
+					</if>
+
+					<delete dir="${tstamp.value}" />
+				</sequential>
+			</for>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="build-xsd">
+		<attribute name="module.dir" />
+
+		<sequential>
+			<if>
+				<available file="@{module.dir}/docroot/WEB-INF/xsd" />
+				<then>
+					<var name="xsd.base.dir" value="docroot/WEB-INF/xsd" />
+				</then>
+				<elseif>
+					<available file="@{module.dir}/xsd" />
+					<then>
+						<var name="xsd.base.dir" value="xsd" />
+					</then>
+				</elseif>
+				<else>
+					<var name="xsd.base.dir" value="" />
+				</else>
+			</if>
+
+			<if>
+				<not>
+					<equals arg1="${xsd.base.dir}" arg2="" />
+				</not>
+				<then>
+					<tstamp>
+						<format property="tstamp.value" pattern="yyyyMMddkkmmssSSS" />
+					</tstamp>
+
+					<mkdir dir="${tstamp.value}" />
+
+					<path id="plugin-lib.classpath">
+						<fileset dir="${app.server.lib.portal.dir}" includes="xbean.jar" />
+						<fileset dir="${plugin.lib.dir}" includes="*.jar" />
+						<pathelement location="${plugin.classes.dir}" />
+					</path>
+
+					<taskdef classname="org.apache.xmlbeans.impl.tool.XMLBean" classpathref="portal.classpath" name="xmlbean" />
+
+					<xmlbean
+						classgendir="${tstamp.value}"
+						classpathref="plugin-lib.classpath"
+						srcgendir="${tstamp.value}"
+					>
+						<fileset dir="@{module.dir}" includes="${xsd.base.dir}/**/*.*" />
+					</xmlbean>
+
+					<zip
+						basedir="${tstamp.value}"
+						destfile="${plugin.lib.dir}/${plugin.name}-xbean.jar"
+					/>
+
+					<delete dir="${tstamp.value}" />
+				</then>
+			</if>
 		</sequential>
 	</macrodef>
 
@@ -318,6 +376,7 @@ Error-Prone was automatically installed. Please rerun your task.
 			</if>
 
 			<delete dir="@{module.dir}/javadoc" />
+			<delete dir="@{module.dir}/pmd-reports" />
 			<delete dir="@{module.dir}/test-classes" />
 			<delete dir="@{module.dir}/test-results" />
 			<delete dir="@{module.dir}/tmp" />
@@ -328,6 +387,8 @@ Error-Prone was automatically installed. Please rerun your task.
 				<fileset dir="@{module.dir}/docroot" includes="**/.sprite.png" />
 				<fileset dir="@{module.dir}/docroot" includes="**/.sprite.properties" />
 				<fileset dir="@{module.dir}/docroot" includes="**/Thumbs.db" />
+				<fileset dir="@{module.dir}/src" includes="**/.sass-cache/**" />
+				<fileset dir="@{module.dir}/src" includes="**/Thumbs.db" />
 			</delete>
 
 			<delete file="${plugin.file}" />
@@ -416,10 +477,12 @@ Error-Prone was automatically installed. Please rerun your task.
 					<if>
 						<available file="@{module.dir}/docroot/WEB-INF/lib" />
 						<then>
-							<delete>
-								<fileset dir="@{module.dir}/docroot/WEB-INF/lib" includes="${required.portal.jars}" />
-								<fileset dir="@{module.dir}/docroot/WEB-INF/lib" includes="${plugin.jars}" />
-							</delete>
+							<retry retrycount="1" retrydelay="5000">
+								<delete>
+									<fileset dir="@{module.dir}/docroot/WEB-INF/lib" includes="${required.portal.jars}" />
+									<fileset dir="@{module.dir}/docroot/WEB-INF/lib" includes="${plugin.jars}" />
+								</delete>
+							</retry>
 						</then>
 					</if>
 
@@ -678,7 +741,7 @@ Error-Prone was automatically installed. Please rerun your task.
 
 					<for param="import.shared.full.path">
 						<path>
-							<fileset dir="${sdk.dir}/dist" includes="${import.shared.current.plugin.name}-${import.shared.current.plugin.full.version}*.jar" />
+							<fileset dir="${sdk.dir}/dist" excludes="**-sources.jar" includes="${import.shared.current.plugin.name}-${import.shared.current.plugin.full.version}*.jar" />
 						</path>
 						<sequential>
 							<copy
@@ -709,7 +772,7 @@ Error-Prone was automatically installed. Please rerun your task.
 
 		<sequential>
 			<copy todir="@{javac.destdir}">
-				<fileset dir="@{javac.srcdir}" excludes="**/*.java" />
+				<fileset dir="@{javac.srcdir}" excludes="**/*.java,**/.sass-cache/*" />
 			</copy>
 
 			<if>
@@ -866,12 +929,22 @@ Error-Prone was automatically installed. Please rerun your task.
 			</copy>
 
 			<if>
-				<available file="@{module.dir}/docroot/WEB-INF/src" />
+				<or>
+					<resourcecount count="0" when="gt">
+						<fileset dir="." includes="**/*.jsp" excludes="@{module.dir}/docroot/META-INF/custom.jsps/" />
+					</resourcecount>
+					<available file="@{module.dir}/docroot/WEB-INF/src" />
+				</or>
 				<then>
 					<copy todir="@{module.dir}/docroot/WEB-INF/lib">
 						<fileset dir="${app.server.lib.portal.dir}" includes="${required.portal.jars}" />
 					</copy>
+				</then>
+			</if>
 
+			<if>
+				<available file="@{module.dir}/docroot/WEB-INF/src" />
+				<then>
 					<if>
 						<available file="@{module.dir}/docroot/WEB-INF/lib/portal-impl.jar" />
 						<then>
@@ -982,7 +1055,7 @@ Please find a solution that does not require portal-impl.jar.
 
 					<copy todir="@{module.dir}/test-classes/@{test.type}">
 						<fileset dir="@{module.dir}/test" includes="*.properties" />
-						<fileset dir="@{module.dir}/test/@{test.type}" includes="**/*.png,**/*.properties,**/*.xml" />
+						<fileset dir="@{module.dir}/test/@{test.type}" includes="**/*.bnd,**/*.png,**/*.policy,**/*.properties,**/*.xml,**/dependencies/**" />
 					</copy>
 
 					<ivy:settings file="${ivy.custom.settings.file}" />
@@ -1303,9 +1376,9 @@ Please find a solution that does not require portal-impl.jar.
 							<if>
 								<available file="${plugin.wsdd.file}" />
 								<then>
-									<copy 
-										file="${plugin.wsdd.file}" 
-										tofile="${module.auto.deploy.dir}/${plugin.name}-wsdd.jar" 
+									<copy
+										file="${plugin.wsdd.file}"
+										tofile="${module.auto.deploy.dir}/${plugin.name}-wsdd.jar"
 									/>
 								</then>
 							</if>
@@ -1332,54 +1405,36 @@ Please find a solution that does not require portal-impl.jar.
 			<if>
 				<antelope:endswith string="${plugin.name}" with="-ext" />
 				<then>
-					<direct-deploy-ext-cmd
-						direct.deploy.dir="${app.server.deploy.dir}"
-						module.dir="@{module.dir}"
-					/>
+					<direct-deploy-ext-cmd />
 				</then>
 				<elseif>
 					<antelope:endswith string="${plugin.name}" with="-hook" />
 					<then>
-						<direct-deploy-hook-cmd
-							direct.deploy.dir="${app.server.deploy.dir}"
-							module.dir="@{module.dir}"
-						/>
+						<direct-deploy-hook-cmd />
 					</then>
 				</elseif>
 				<elseif>
 					<antelope:endswith string="${plugin.name}" with="-layouttpl" />
 					<then>
-						<direct-deploy-layouttpl-cmd
-							direct.deploy.dir="${app.server.deploy.dir}"
-							module.dir="@{module.dir}"
-						/>
+						<direct-deploy-layouttpl-cmd />
 					</then>
 				</elseif>
 				<elseif>
 					<antelope:endswith string="${plugin.name}" with="-portlet" />
 					<then>
-						<direct-deploy-portlet-cmd
-							direct.deploy.dir="${app.server.deploy.dir}"
-							module.dir="@{module.dir}"
-						/>
+						<direct-deploy-portlet-cmd />
 					</then>
 				</elseif>
 				<elseif>
 					<antelope:endswith string="${plugin.name}" with="-theme" />
 					<then>
-						<direct-deploy-theme-cmd
-							direct.deploy.dir="${app.server.deploy.dir}"
-							module.dir="@{module.dir}"
-						/>
+						<direct-deploy-theme-cmd />
 					</then>
 				</elseif>
 				<elseif>
 					<antelope:endswith string="${plugin.name}" with="-web" />
 					<then>
-						<direct-deploy-web-cmd
-							direct.deploy.dir="${app.server.deploy.dir}"
-							module.dir="@{module.dir}"
-						/>
+						<direct-deploy-web-cmd />
 					</then>
 				</elseif>
 			</if>
@@ -1387,14 +1442,9 @@ Please find a solution that does not require portal-impl.jar.
 	</macrodef>
 
 	<macrodef name="direct-deploy-ext-cmd">
-		<attribute name="direct.deploy.dir" />
-		<attribute name="module.dir" />
+		<attribute name="direct.deploy.dir" default="${app.server.deploy.dir}" />
 
 		<sequential>
-			<set-module-properties
-				module.dir="@{module.dir}"
-			/>
-
 			<java
 				classname="com.liferay.portal.tools.deploy.ExtDeployer"
 				classpathref="portal.classpath"
@@ -1426,14 +1476,9 @@ Please find a solution that does not require portal-impl.jar.
 	</macrodef>
 
 	<macrodef name="direct-deploy-hook-cmd">
-		<attribute name="direct.deploy.dir" />
-		<attribute name="module.dir" />
+		<attribute name="direct.deploy.dir" default="${app.server.deploy.dir}" />
 
 		<sequential>
-			<set-module-properties
-				module.dir="@{module.dir}"
-			/>
-
 			<java
 				classname="com.liferay.portal.tools.deploy.HookDeployer"
 				classpathref="portal.classpath"
@@ -1465,14 +1510,9 @@ Please find a solution that does not require portal-impl.jar.
 	</macrodef>
 
 	<macrodef name="direct-deploy-layouttpl-cmd">
-		<attribute name="direct.deploy.dir" />
-		<attribute name="module.dir" />
+		<attribute name="direct.deploy.dir" default="${app.server.deploy.dir}" />
 
 		<sequential>
-			<set-module-properties
-				module.dir="@{module.dir}"
-			/>
-
 			<java
 				classname="com.liferay.portal.tools.deploy.LayoutTemplateDeployer"
 				classpathref="portal.classpath"
@@ -1500,14 +1540,9 @@ Please find a solution that does not require portal-impl.jar.
 	</macrodef>
 
 	<macrodef name="direct-deploy-portlet-cmd">
-		<attribute name="direct.deploy.dir" />
-		<attribute name="module.dir" />
+		<attribute name="direct.deploy.dir" default="${app.server.deploy.dir}" />
 
 		<sequential>
-			<set-module-properties
-				module.dir="@{module.dir}"
-			/>
-
 			<java
 				classname="com.liferay.portal.tools.deploy.PortletDeployer"
 				classpathref="portal.classpath"
@@ -1547,14 +1582,9 @@ Please find a solution that does not require portal-impl.jar.
 	</macrodef>
 
 	<macrodef name="direct-deploy-theme-cmd">
-		<attribute name="direct.deploy.dir" />
-		<attribute name="module.dir" />
+		<attribute name="direct.deploy.dir" default="${app.server.deploy.dir}" />
 
 		<sequential>
-			<set-module-properties
-				module.dir="@{module.dir}"
-			/>
-
 			<java
 				classname="com.liferay.portal.tools.deploy.ThemeDeployer"
 				classpathref="portal.classpath"
@@ -1588,14 +1618,9 @@ Please find a solution that does not require portal-impl.jar.
 	</macrodef>
 
 	<macrodef name="direct-deploy-web-cmd">
-		<attribute name="direct.deploy.dir" />
-		<attribute name="module.dir" />
+		<attribute name="direct.deploy.dir" default="${app.server.deploy.dir}" />
 
 		<sequential>
-			<set-module-properties
-				module.dir="@{module.dir}"
-			/>
-
 			<java
 				classname="com.liferay.portal.tools.deploy.WebDeployer"
 				classpathref="portal.classpath"
@@ -1626,19 +1651,29 @@ Please find a solution that does not require portal-impl.jar.
 		</sequential>
 	</macrodef>
 
-	<macrodef name="javadoc-macro">
-		<attribute name="module.dir" />
+	<macrodef name="gradle-execute">
+		<attribute name="task" />
+		<element implicit="true" name="args" optional="true" />
 
 		<sequential>
-			<set-module-properties
-				module.dir="@{module.dir}"
-			/>
+			<if>
+				<os family="unix" />
+				<then>
+					<property name="gradlew.suffix" value="" />
 
-			<javadoc
-				classpathref="plugin.classpath"
-				destdir="javadoc"
-				sourcepath="${plugin.source.dir}"
-			/>
+					<chmod file="${sdk.dir}/tools/gradle/gradlew${gradlew.suffix}" perm="a+x" />
+				</then>
+				<else>
+					<property name="gradlew.suffix" value=".bat" />
+				</else>
+			</if>
+
+			<exec executable="${sdk.dir}/tools/gradle/gradlew${gradlew.suffix}" failonerror="true">
+				<arg value="-PpluginsExcludes=${plugins.excludes}" />
+				<arg value="-PpluginsIncludes=${plugins.includes}" />
+				<args />
+				<arg value="@{task}" />
+			</exec>
 		</sequential>
 	</macrodef>
 
@@ -1650,10 +1685,15 @@ Please find a solution that does not require portal-impl.jar.
 				module.dir="@{module.dir}"
 			/>
 
-			<jar
-				basedir="javadoc"
-				jarfile="${plugin.javadoc.file}"
-			/>
+			<if>
+				<available file="javadoc" />
+				<then>
+					<jar
+						basedir="javadoc"
+						jarfile="${plugin.javadoc.file}"
+					/>
+				</then>
+			</if>
 		</sequential>
 	</macrodef>
 
@@ -1665,10 +1705,21 @@ Please find a solution that does not require portal-impl.jar.
 				module.dir="@{module.dir}"
 			/>
 
-			<loop-macrodef-or-target
-				module.dirs="@{module.dir}"
-				target.name="compile"
-			/>
+			<if>
+				<matches pattern=".*-test" string="@{module.dir}" />
+				<then>
+					<loop-macrodef-or-target
+						module.dirs="@{module.dir}"
+						target.name="compile-test"
+					/>
+				</then>
+				<else>
+					<loop-macrodef-or-target
+						module.dirs="@{module.dir}"
+						target.name="compile"
+					/>
+				</else>
+			</if>
 
 			<mkdir dir="${sdk.dir}/dist" />
 
@@ -1685,6 +1736,44 @@ Please find a solution that does not require portal-impl.jar.
 							</uptodate>
 						</not>
 						<then>
+							<if>
+								<and>
+									<available file="@{module.dir}/docroot" />
+									<resourcecount count="0" when="gt">
+										<fileset dir="@{module.dir}/docroot" includes="**/*.css" />
+									</resourcecount>
+								</and>
+								<then>
+									<build-css
+										module.dir="@{module.dir}"
+										sass.docroot.dir="${module.dir.unix}/docroot"
+									/>
+								</then>
+							</if>
+
+							<if>
+								<and>
+									<available file="@{module.dir}/src/META-INF/resources" />
+									<resourcecount count="0" when="gt">
+										<fileset dir="@{module.dir}/src/META-INF/resources" includes="**/*.css" />
+									</resourcecount>
+								</and>
+								<then>
+									<build-css
+										module.dir="@{module.dir}"
+										sass.docroot.dir="${module.dir.unix}/src/META-INF/resources"
+									/>
+								</then>
+							</if>
+
+							<build-wsdl
+								module.dir="@{module.dir}"
+							/>
+
+							<build-xsd
+								module.dir="@{module.dir}"
+							/>
+
 							<set-build-xml-var
 								build.xml.var.name="original.lib.name"
 								module.dir="@{module.dir}"
@@ -1721,12 +1810,26 @@ Please find a solution that does not require portal-impl.jar.
 								</then>
 							</if>
 
-							<loadfile property="jar-macro.bnd.bnd.content" srcFile="@{module.dir}/bnd.bnd" />
+							<manifest-helper />
 
-							<var name="jar-macro.bnd.bnd.content" unset="true" />
+							<bndexpand propertyfile="${sdk.dir}/common.bnd" />
 
-							<baseline-jar-macro
-								module.dir="@{module.dir}"
+							<bnd eclipse="false" exceptions="true" failok="false" inherit="true" output="${plugin.file}">
+								<bndfiles>
+									<fileset dir="@{module.dir}">
+										<include name="bnd.bnd" />
+									</fileset>
+								</bndfiles>
+								<classpath>
+									<pathelement location="${plugin.classes.dir}" />
+								</classpath>
+								<property name="-sourcepath" value="@{module.dir}" />
+							</bnd>
+
+							<baseline-jar
+								bndFile="@{module.dir}/bnd.bnd"
+								bndRootFile="${sdk.dir}/common.bnd"
+								newJarFile="${plugin.file}"
 							/>
 						</then>
 					</if>
@@ -1758,7 +1861,6 @@ Please find a solution that does not require portal-impl.jar.
 
 									<direct-deploy-portlet-cmd
 										direct.deploy.dir="${tstamp.value}"
-										module.dir="@{module.dir}"
 									/>
 
 									<var name="temp.deployed.plugin.dir" value="${tstamp.value}/${plugin.name}-${plugin.full.version}" />
@@ -1841,6 +1943,81 @@ Please find a solution that does not require portal-impl.jar.
 					/>
 				</else>
 			</if>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="javadoc-macro">
+		<attribute name="module.dir" />
+
+		<sequential>
+			<set-module-properties
+				module.dir="@{module.dir}"
+			/>
+
+			<resourcecount property="module.java.count">
+				<fileset dir="${plugin.source.dir}" includes="**/*.java" />
+			</resourcecount>
+
+			<if>
+				<not>
+					<equals arg1="${module.java.count}" arg2="0" />
+				</not>
+				<then>
+					<javadoc
+						classpathref="plugin.classpath"
+						destdir="javadoc"
+						sourcepath="${plugin.source.dir}"
+					/>
+				</then>
+			</if>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="loop-macrodef-or-target">
+		<attribute name="module.dirs" />
+		<attribute name="target.name" />
+
+		<sequential>
+			<var name="module.dirs" value="@{module.dirs}" />
+			<var name="target.name" value="@{target.name}" />
+
+			<groovy>
+				<![CDATA[
+					targetName = properties["target.name"]
+
+					if ((properties["target.name"] == "jar") ||
+						(properties["target.name"] == "javadoc") ||
+						(properties["target.name"] == "war")) {
+
+						macrodefName = properties["target.name"] + "-macro"
+					}
+					else {
+						macrodefName = properties["target.name"]
+					}
+
+					moduleDirs = "${properties["module.dirs"]}".split(",")
+
+					for (moduleDir in moduleDirs) {
+						File buildXml = new File(moduleDir + "/build.xml")
+
+						if (buildXml.exists()) {
+							String buildXmlContent = buildXml.text
+
+							ant."set-module-properties"("module.dir": moduleDir)
+
+							if (buildXmlContent =~ "<target name=\"" + targetName + "\"") {
+								ant.ant(dir: moduleDir, target: targetName)
+							}
+							else {
+								ant."${macrodefName}"("module.dir": moduleDir)
+							}
+						}
+						else {
+							println "Skipping " + moduleDir + " because it does not have a build.xml file."
+						}
+					}
+				]]>
+			</groovy>
 		</sequential>
 	</macrodef>
 
@@ -1927,6 +2104,57 @@ Please find a solution that does not require portal-impl.jar.
 		</sequential>
 	</macrodef>
 
+	<macrodef name="multiroot-subant">
+		<attribute name="build.file" />
+		<attribute name="excludes" />
+		<attribute name="includes" />
+		<attribute name="root.dir" />
+		<attribute name="target" />
+
+		<sequential>
+			<path id="includes.path">
+				<dirset dir="@{root.dir}" excludes="@{excludes}" includes="@{includes}" />
+			</path>
+
+			<local name="includes.path" />
+
+			<pathconvert pathsep="," property="includes.path" refid="includes.path" targetos="unix" />
+
+			<subant target="@{target}">
+				<multirootfileset basedirs="${includes.path}">
+					<include name="@{build.file}" />
+				</multirootfileset>
+			</subant>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="release">
+		<attribute name="module.dir" />
+
+		<sequential>
+			<if>
+				<available file="@{module.dir}/bnd.bnd" />
+				<then>
+					<set-module-properties
+						module.dir="@{module.dir}"
+					/>
+
+					<loop-macrodef-or-target
+						module.dirs="@{module.dir}"
+						target.name="jar"
+					/>
+
+					<bndexpand propertyfile="${sdk.dir}/common.bnd" />
+
+					<release-to-repo
+						bndRootFile="${sdk.dir}/common.bnd"
+						file="${plugin.file}"
+					/>
+				</then>
+			</if>
+		</sequential>
+	</macrodef>
+
 	<macrodef name="remake-dir">
 		<attribute name="dir" />
 
@@ -1934,6 +2162,69 @@ Please find a solution that does not require portal-impl.jar.
 			<delete dir="@{dir}" />
 
 			<mkdir dir="@{dir}" />
+		</sequential>
+	</macrodef>
+
+	<macrodef name="reset-gradle">
+		<attribute name="module.dir" />
+
+		<sequential>
+			<delete file="@{module.dir}/build.gradle" />
+
+			<touch file="@{module.dir}/build.gradle" />
+		</sequential>
+	</macrodef>
+
+	<macrodef name="run-cpd">
+		<attribute name="module.dir" />
+
+		<sequential>
+			<taskdef classpathref="classpath.net.sourceforge.pmd" classname="net.sourceforge.pmd.cpd.CPDTask" name="cpd" />
+
+			<if>
+				<isset property="cpd.basedir" />
+				<then>
+					<var name="module.cpd.basedir" value="${cpd.basedir}" />
+				</then>
+				<else>
+					<var name="module.cpd.basedir" value="@{module.dir}" />
+				</else>
+			</if>
+
+			<mkdir dir="${module.cpd.basedir}/pmd-reports" />
+
+			<cpd encoding="UTF-8" format="${pmd.output.type}" minimumTokenCount="${pmd.cpd.minimun.token.count}" outputFile="${module.cpd.basedir}/pmd-reports/cpd.${pmd.output.type}">
+				<fileset dir="${module.cpd.basedir}" includes="**/*.java" />
+			</cpd>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="run-pmd">
+		<attribute name="module.dir" />
+
+		<sequential>
+			<taskdef classpathref="classpath.net.sourceforge.pmd" classname="net.sourceforge.pmd.ant.PMDTask" name="pmd" />
+
+			<if>
+				<isset property="pmd.basedir" />
+				<then>
+					<var name="module.pmd.basedir" value="${pmd.basedir}" />
+				</then>
+				<else>
+					<var name="module.pmd.basedir" value="@{module.dir}" />
+				</else>
+			</if>
+
+			<mkdir dir="${module.pmd.basedir}/pmd-reports" />
+
+			<pmd shortFilenames="true" threads="${pmd.threads}">
+				<fileset dir="${module.pmd.basedir}" excludes="${pmd.java.excludes}" includes="${pmd.java.includes}" />
+				<formatter toConsole="${pmd.output.console}" toFile="${module.pmd.basedir}/pmd-reports/pmd-report.${pmd.output.type}" type="${pmd.output.type}" />
+				<ruleset>${pmd.java.ruleset}</ruleset>
+				<sourceLanguage name="java" version="${ant.build.javac.source}" />
+			</pmd>
+
+			<var name="module.pmd.basedir" unset="true" />
 		</sequential>
 	</macrodef>
 
@@ -1975,115 +2266,63 @@ Please find a solution that does not require portal-impl.jar.
 		</sequential>
 	</macrodef>
 
-	<macrodef name="setup-osgi-jmx">
-		<sequential>
-			<ivy:resolve>
-				<dependency name="org.apache.aries.jmx" org="org.apache.aries.jmx" rev="1.1.1" />
-				<dependency name="org.apache.aries.util" org="org.apache.aries" rev="1.1.0" />
-				<exclude org="org.eclipse" />
-				<exclude org="org.osgi" />
-			</ivy:resolve>
+	<macrodef name="start-test-app-server">
+		<attribute name="module.dir" />
+		<attribute name="test.class" />
 
-			<ivy:retrieve pattern="${module.framework.base.dir}/test/[artifact]-[revision].[ext]" type="bundle,jar" />
-		</sequential>
-	</macrodef>
-
-	<macrodef name="setup-tomcat-jmx">
 		<sequential>
 			<if>
-				<os family="unix" />
+				<and>
+					<isset property="lp.portal.project.dir" />
+					<available file="@{module.dir}/test-classes/integration" type="dir" />
+				</and>
 				<then>
-					<echo file="${app.server.tomcat.dir}/bin/setenv.sh" append="true">
-						<![CDATA[
-							JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=${jmx.remote.authenticate} -Dcom.sun.management.jmxremote.port=${jmx.remote.port} -Dcom.sun.management.jmxremote.ssl=${jmx.remote.ssl}"
+					<resourcecount property="test.integration.count">
+						<fileset dir="@{module.dir}/test-classes/integration" includes="@{test.class}">
+							<filename regex="${junit.test.excludes}" negate="true" />
+						</fileset>
+					</resourcecount>
 
-							CATALINA_OPTS="${CATALINA_OPTS} ${JMX_OPTS}"
-						]]>
-					</echo>
+					<if>
+						<and>
+							<not>
+								<equals arg1="${test.integration.count}" arg2="0" />
+							</not>
+							<not>
+								<available file="@{module.dir}/test/integration/skip.managed.app.server" type="file" />
+							</not>
+						</and>
+						<then>
+							<delete file="${lp.portal.project.dir}/.testable.portal.started" failonerror="false" />
+
+							<ant antfile="${lp.portal.project.dir}/build-test.xml" target="setup-testable-tomcat" inheritAll="false">
+								<property name="project.dir" value="${lp.portal.project.dir}" />
+							</ant>
+
+							<ant antfile="${lp.portal.project.dir}/build-test.xml" target="start-app-server" inheritAll="false">
+								<property name="project.dir" value="${lp.portal.project.dir}" />
+								<property name="testable.portal.started.marker.file" value="${lp.portal.project.dir}/.testable.portal.started" />
+							</ant>
+						</then>
+					</if>
 				</then>
-				<else>
-					<echo file="${app.server.tomcat.dir}/bin/setenv.bat" append="true">
-						<![CDATA[
-							set JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=${jmx.remote.authenticate} -Dcom.sun.management.jmxremote.port=${jmx.remote.port} -Dcom.sun.management.jmxremote.ssl=${jmx.remote.ssl}"
-
-							set CATALINA_OPTS="%CATALINA_OPTS% %JMX_OPTS%"
-						]]>
-					</echo>
-				</else>
 			</if>
 		</sequential>
 	</macrodef>
 
-	<macrodef name="setup-tomcat-manager">
+	<macrodef name="stop-test-app-server">
 		<sequential>
 			<if>
-				<not>
-					<available file="${app.server.tomcat.dir}/webapps/manager" type="dir" />
-				</not>
+				<and>
+					<available file="${lp.portal.project.dir}/.testable.portal.started" />
+					<isset property="lp.portal.project.dir" />
+				</and>
 				<then>
-					<antelope:stringutil string="${app.server.tomcat.dir}" property="tomcat.version.beginindex">
-						<antelope:indexof string="tomcat-" fromindex="0" />
-					</antelope:stringutil>
+					<ant antfile="${lp.portal.project.dir}/build-test.xml" target="stop-app-server" inheritAll="false">
+						<property name="project.dir" value="${lp.portal.project.dir}" />
+					</ant>
 
-					<antelope:math
-						datatype="int"
-						operand1="${tomcat.version.beginindex}"
-						operand2="7"
-						operation="+"
-						result="tomcat.version.beginindex"
-					/>
-
-					<antelope:stringutil string="${app.server.tomcat.dir}" property="tomcat.version">
-						<antelope:substring beginindex="${tomcat.version.beginindex}" />
-					</antelope:stringutil>
-
-					<antelope:stringutil string="${tomcat.version}" property="tomcat.major.version.endindex">
-						<antelope:indexof string="." fromindex="0" />
-					</antelope:stringutil>
-
-					<antelope:stringutil string="${tomcat.version}" property="tomcat.major.version">
-						<antelope:substring beginindex="0" endindex="${tomcat.major.version.endindex}" />
-					</antelope:stringutil>
-
-					<get
-						dest="tomcat.zip"
-						src="http://archive.apache.org/dist/tomcat/tomcat-${tomcat.major.version}/v${tomcat.version}/bin/apache-tomcat-${tomcat.version}.zip"
-					/>
-
-					<unzip
-						dest="${app.server.tomcat.dir}/webapps"
-						src="tomcat.zip"
-					>
-						<patternset
-							includes="apache-tomcat-${tomcat.version}/webapps/manager/**/*"
-						/>
-						<mapper>
-							<globmapper from="apache-tomcat-${tomcat.version}/webapps/*" to="*" />
-						</mapper>
-					</unzip>
-
-					<delete file="tomcat.zip" />
-
-					<copy
-						file="${app.server.tomcat.dir}/conf/tomcat-users.xml"
-						overwrite="true"
-						tofile="${app.server.tomcat.dir}/conf/tomcat-users.xml.orig"
-					/>
-
-					<echo file="${app.server.tomcat.dir}/conf/tomcat-users.xml"><![CDATA[<?xml version="1.0"?>
-
-<tomcat-users>
-	<role rolename="tomcat" />
-	<role rolename="manager-gui" />
-	<role rolename="manager-script" />
-	<role rolename="manager-jmx" />
-	<role rolename="manager-status" />
-	<user
-		password="${app.server.tomcat.manager.password}"
-		roles="tomcat,manager-gui,manager-script,manager-jmx,manager-status"
-		username="${app.server.tomcat.manager.user}"
-	/>
-</tomcat-users>]]></echo>
+					<delete file="${lp.portal.project.dir}/.testable.portal.started" failonerror="false" />
 				</then>
 			</if>
 		</sequential>
@@ -2193,6 +2432,16 @@ Please find a solution that does not require portal-impl.jar.
 						module.dir="@{module.dir}"
 						test.type="@{test.type}"
 					/>
+
+					<if>
+						<equals arg1="@{test.type}" arg2="integration" />
+						<then>
+							<start-test-app-server
+								module.dir="@{module.dir}"
+								test.class="@{test.class}"
+							/>
+						</then>
+					</if>
 
 					<if>
 						<available file="@{module.dir}/test/@{test.type}" type="dir" />
@@ -2596,6 +2845,34 @@ for (String path : paths) {
 		</sequential>
 	</macrodef>
 
+	<target name="build-css">
+		<loop-macrodef-or-target
+			module.dirs="${plugins.includes.path}"
+			target.name="build-css"
+		/>
+	</target>
+
+	<target name="build-db">
+		<loop-macrodef-or-target
+			module.dirs="${plugins.includes.path}"
+			target.name="build-db"
+		/>
+	</target>
+
+	<target name="build-wsdl">
+		<loop-macrodef-or-target
+			module.dirs="${plugins.includes.path}"
+			target.name="build-wsdl"
+		/>
+	</target>
+
+	<target name="build-xsd">
+		<loop-macrodef-or-target
+			module.dirs="${plugins.includes.path}"
+			target.name="build-xsd"
+		/>
+	</target>
+
 	<target name="clean">
 		<loop-macrodef-or-target
 			module.dirs="${plugins.includes.path}"
@@ -2607,6 +2884,33 @@ for (String path : paths) {
 		<loop-macrodef-or-target
 			module.dirs="${plugins.includes.path}"
 			target.name="compile"
+		/>
+	</target>
+
+	<target name="compile-jsp">
+		<for param="module.web.dir">
+			<dirset dir="." excludes="**/templates/**" />
+			<sequential>
+				<if>
+					<resourcecount count="0" when="gt">
+						<fileset
+							dir="@{module.web.dir}"
+							excludes="**/custom_jsps/**/*"
+							includes="docroot/**/*.jsp,src/META-INF/resources/**/*.jsp,tmp/**/*.jsp"
+						/>
+					</resourcecount>
+					<then>
+						<ant antfile="@{module.web.dir}/build.xml" dir="@{module.web.dir}" target="compile-jsp" />
+					</then>
+				</if>
+			</sequential>
+		</for>
+	</target>
+
+	<target name="compile-test">
+		<loop-macrodef-or-target
+			module.dirs="${plugins.includes.path}"
+			target.name="compile-test"
 		/>
 	</target>
 
@@ -2655,6 +2959,30 @@ for (String path : paths) {
 		/>
 	</target>
 
+	<target name="direct-deploy-ext-cmd">
+		<direct-deploy-ext-cmd />
+	</target>
+
+	<target name="direct-deploy-hook-cmd">
+		<direct-deploy-hook-cmd />
+	</target>
+
+	<target name="direct-deploy-layouttpl-cmd">
+		<direct-deploy-layouttpl-cmd />
+	</target>
+
+	<target name="direct-deploy-portlet-cmd">
+		<direct-deploy-portlet-cmd />
+	</target>
+
+	<target name="direct-deploy-theme-cmd">
+		<direct-deploy-theme-cmd />
+	</target>
+
+	<target name="direct-deploy-web-cmd">
+		<direct-deploy-web-cmd />
+	</target>
+
 	<target name="format-javadoc">
 		<java
 			classname="com.liferay.portal.tools.JavadocFormatter"
@@ -2685,8 +3013,8 @@ for (String path : paths) {
 		<delete file="ServiceBuilder.temp" />
 	</target>
 
-	<target name="hello">
-		<gradle-execute task="hello" />
+	<target name="init-gradle">
+		<gradle-execute task="initGradle" />
 	</target>
 
 	<target name="jar">
@@ -2704,28 +3032,70 @@ for (String path : paths) {
 		<echo message="${current.time}" />
 	</target>
 
-	<target name="run-pmd">
-		<path id="classpath.net.sourceforge.pmd">
-			<fileset dir="${sdk.dir}/dependencies/net.sourceforge.pmd/lib" includes="*.jar" />
+	<target name="release">
+		<loop-macrodef-or-target
+			module.dirs="${plugins.includes.path}"
+			target.name="release"
+		/>
+	</target>
+
+	<target name="reset-gradle">
+		<path id="reset.gradle.path">
+			<dirset dir="${basedir}" excludes="tools/**" includes="**/docroot" />
+			<dirset dir="${basedir}" excludes="**/docroot/WEB-INF/src" includes="**/src" />
 		</path>
 
-		<taskdef classpathref="classpath.net.sourceforge.pmd" classname="net.sourceforge.pmd.ant.PMDTask" name="pmd" />
+		<pathconvert
+			pathsep=","
+			property="reset.gradle.path"
+			refid="reset.gradle.path"
+			targetos="unix"
+		/>
 
+		<propertyregex
+			input="${reset.gradle.path}"
+			override="true"
+			property="reset.gradle.path"
+			regexp="[\\/](?:docroot|src)(,|$)"
+			replace="\1"
+		/>
+
+		<loop-macrodef-or-target
+			module.dirs="${reset.gradle.path}"
+			target.name="reset-gradle"
+		/>
+	</target>
+
+	<target name="run-cpd">
 		<if>
 			<not>
-				<isset property="pmd.basedir" />
+				<isset property="plugins.includes.path" />
 			</not>
 			<then>
-				<property name="pmd.basedir" value="${basedir}" />
+				<property name="plugins.includes.path" value="${basedir}" />
 			</then>
 		</if>
 
-		<pmd shortFilenames="true" threads="${pmd.threads}">
-			<fileset dir="${pmd.basedir}" excludes="${pmd.java.excludes}" includes="${pmd.java.includes}" />
-			<formatter toConsole="true" type="text" />
-			<ruleset>${pmd.java.ruleset}</ruleset>
-			<sourceLanguage name="java" version="${ant.build.javac.source}" />
-		</pmd>
+		<loop-macrodef-or-target
+			module.dirs="${plugins.includes.path}"
+			target.name="run-cpd"
+		/>
+	</target>
+
+	<target name="run-pmd">
+		<if>
+			<not>
+				<isset property="plugins.includes.path" />
+			</not>
+			<then>
+				<property name="plugins.includes.path" value="${basedir}" />
+			</then>
+		</if>
+
+		<loop-macrodef-or-target
+			module.dirs="${plugins.includes.path}"
+			target.name="run-pmd"
+		/>
 	</target>
 
 	<target name="setup-arquillian">
@@ -2777,14 +3147,6 @@ for (String path : paths) {
 		</if>
 	</target>
 
-	<target name="setup-testable-tomcat">
-		<setup-osgi-jmx />
-
-		<setup-tomcat-jmx />
-
-		<setup-tomcat-manager />
-	</target>
-
 	<target name="sort-xml-attributes">
 		<java
 			classname="com.liferay.portal.tools.XMLAttributesSorter"
@@ -2803,6 +3165,8 @@ for (String path : paths) {
 			module.dirs="${plugins.includes.path}"
 			target.name="test"
 		/>
+
+		<stop-test-app-server />
 	</target>
 
 	<target name="test-integration">
@@ -2810,6 +3174,8 @@ for (String path : paths) {
 			module.dirs="${plugins.includes.path}"
 			target.name="test-integration"
 		/>
+
+		<stop-test-app-server />
 	</target>
 
 	<target name="test-unit">

@@ -46,6 +46,8 @@
 		<!-- Audit fields -->
 
 		<column name="companyId" type="long" />
+		<column name="userId" type="long" />
+		<column name="userName" type="String" />
 		<column name="createTime" type="long" />
 		<column name="modifiedTime" type="long" />
 
@@ -60,6 +62,7 @@
 		<column name="changeLog" type="String" />
 		<column name="extraSettings" type="String" />
 		<column name="version" type="String" />
+		<column name="versionId" type="long" />
 		<column name="size" type="long" />
 		<column name="checksum" type="String" />
 		<column name="event" type="String" />
@@ -107,6 +110,7 @@
 
 		<tx-required>getFileDeltaAsStream</tx-required>
 	</entity>
+	<entity name="SyncPreferences" local-service="true" remote-service="false" tx-manager="false" />
 	<exceptions>
 		<exception>SyncDLObjectChecksum</exception>
 	</exceptions>

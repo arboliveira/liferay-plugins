@@ -20,18 +20,26 @@
 KBArticle kbArticle = (KBArticle)request.getAttribute(WebKeys.KNOWLEDGE_BASE_KB_ARTICLE);
 
 KBNavigationDisplayContext kbNavigationDisplayContext = new KBNavigationDisplayContext(renderRequest, portalPreferences, portletPreferences, kbArticle);
+
+request.setAttribute(WebKeys.KNOWLEDGE_BASE_KB_NAVIGATION_DISPLAY_CONTEXT, kbNavigationDisplayContext);
 %>
 
 <c:choose>
 	<c:when test="<%= kbArticle != null %>">
 		<div class="row-fluid">
-			<c:if test="<%= kbNavigationDisplayContext.isShowNavigation() %>">
+			<c:if test="<%= kbNavigationDisplayContext.isLeftNavigationVisible() %>">
 				<div class="span3">
 					<liferay-util:include page="/display/view_navigation.jsp" servletContext="<%= application %>" />
 				</div>
 			</c:if>
 
-			<div class='<%= kbNavigationDisplayContext.isShowNavigation() ? "span9" : "span12" %>'>
+			<div class='<%= kbNavigationDisplayContext.isLeftNavigationVisible() ? "span9" : "span12" %>'>
+				<c:if test="<%= kbNavigationDisplayContext.isTopNavigationVisible() %>">
+					<div class="kbarticle-navigation">
+						<liferay-util:include page="/display/content_root_selector.jsp" servletContext="<%= application %>" />
+					</div>
+				</c:if>
+
 				<liferay-util:include page="/display/view_article.jsp" servletContext="<%= application %>" />
 			</div>
 		</div>

@@ -16,7 +16,6 @@ package com.liferay.sync.service;
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
@@ -53,7 +52,6 @@ public interface SyncDLObjectLocalService extends BaseLocalService,
 	* @return the sync d l object that was added
 	* @throws SystemException if a system exception occurred
 	*/
-	@com.liferay.portal.kernel.search.Indexable(type = IndexableType.REINDEX)
 	public com.liferay.sync.model.SyncDLObject addSyncDLObject(
 		com.liferay.sync.model.SyncDLObject syncDLObject)
 		throws com.liferay.portal.kernel.exception.SystemException;
@@ -75,7 +73,6 @@ public interface SyncDLObjectLocalService extends BaseLocalService,
 	* @throws PortalException if a sync d l object with the primary key could not be found
 	* @throws SystemException if a system exception occurred
 	*/
-	@com.liferay.portal.kernel.search.Indexable(type = IndexableType.DELETE)
 	public com.liferay.sync.model.SyncDLObject deleteSyncDLObject(
 		long syncDLObjectId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -88,7 +85,6 @@ public interface SyncDLObjectLocalService extends BaseLocalService,
 	* @return the sync d l object that was removed
 	* @throws SystemException if a system exception occurred
 	*/
-	@com.liferay.portal.kernel.search.Indexable(type = IndexableType.DELETE)
 	public com.liferay.sync.model.SyncDLObject deleteSyncDLObject(
 		com.liferay.sync.model.SyncDLObject syncDLObject)
 		throws com.liferay.portal.kernel.exception.SystemException;
@@ -230,7 +226,6 @@ public interface SyncDLObjectLocalService extends BaseLocalService,
 	* @return the sync d l object that was updated
 	* @throws SystemException if a system exception occurred
 	*/
-	@com.liferay.portal.kernel.search.Indexable(type = IndexableType.REINDEX)
 	public com.liferay.sync.model.SyncDLObject updateSyncDLObject(
 		com.liferay.sync.model.SyncDLObject syncDLObject)
 		throws com.liferay.portal.kernel.exception.SystemException;
@@ -255,11 +250,12 @@ public interface SyncDLObjectLocalService extends BaseLocalService,
 		throws java.lang.Throwable;
 
 	public com.liferay.sync.model.SyncDLObject addSyncDLObject(long companyId,
-		long modifiedTime, long repositoryId, long parentFolderId,
-		java.lang.String name, java.lang.String extension,
-		java.lang.String mimeType, java.lang.String description,
-		java.lang.String changeLog, java.lang.String extraSettings,
-		java.lang.String version, long size, java.lang.String checksum,
+		long userId, java.lang.String userName, long modifiedTime,
+		long repositoryId, long parentFolderId, java.lang.String name,
+		java.lang.String extension, java.lang.String mimeType,
+		java.lang.String description, java.lang.String changeLog,
+		java.lang.String extraSettings, java.lang.String version,
+		long versionId, long size, java.lang.String checksum,
 		java.lang.String event, java.util.Date lockExpirationDate,
 		long lockUserId, java.lang.String lockUserName, java.lang.String type,
 		long typePK, java.lang.String typeUuid)

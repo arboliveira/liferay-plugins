@@ -31,9 +31,13 @@ public interface AlloyController {
 
 	public void execute() throws Exception;
 
+	public long getLastModified();
+
 	public Portlet getPortlet();
 
 	public HttpServletRequest getRequest();
+
+	public String getResponseContent();
 
 	public ThemeDisplay getThemeDisplay();
 
@@ -49,6 +53,8 @@ public interface AlloyController {
 	public void setPageContext(PageContext pageContext);
 
 	public void setUser(User user);
+
+	public String translate(String pattern, Object... arguments);
 
 	public void updateModel(BaseModel<?> baseModel, Object... properties)
 		throws Exception;

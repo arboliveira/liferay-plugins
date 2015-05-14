@@ -60,7 +60,7 @@ public class AssetEntrySetWrapper implements AssetEntrySet,
 		attributes.put("creatorClassPK", getCreatorClassPK());
 		attributes.put("payload", getPayload());
 		attributes.put("childAssetEntrySetsCount", getChildAssetEntrySetsCount());
-		attributes.put("ratingsStatsTotalScore", getRatingsStatsTotalScore());
+		attributes.put("assetEntrySetLikesCount", getAssetEntrySetLikesCount());
 		attributes.put("privateAssetEntrySet", getPrivateAssetEntrySet());
 
 		return attributes;
@@ -136,11 +136,11 @@ public class AssetEntrySetWrapper implements AssetEntrySet,
 			setChildAssetEntrySetsCount(childAssetEntrySetsCount);
 		}
 
-		Integer ratingsStatsTotalScore = (Integer)attributes.get(
-				"ratingsStatsTotalScore");
+		Integer assetEntrySetLikesCount = (Integer)attributes.get(
+				"assetEntrySetLikesCount");
 
-		if (ratingsStatsTotalScore != null) {
-			setRatingsStatsTotalScore(ratingsStatsTotalScore);
+		if (assetEntrySetLikesCount != null) {
+			setAssetEntrySetLikesCount(assetEntrySetLikesCount);
 		}
 
 		Boolean privateAssetEntrySet = (Boolean)attributes.get(
@@ -414,23 +414,23 @@ public class AssetEntrySetWrapper implements AssetEntrySet,
 	}
 
 	/**
-	* Returns the ratings stats total score of this asset entry set.
+	* Returns the asset entry set likes count of this asset entry set.
 	*
-	* @return the ratings stats total score of this asset entry set
+	* @return the asset entry set likes count of this asset entry set
 	*/
 	@Override
-	public int getRatingsStatsTotalScore() {
-		return _assetEntrySet.getRatingsStatsTotalScore();
+	public int getAssetEntrySetLikesCount() {
+		return _assetEntrySet.getAssetEntrySetLikesCount();
 	}
 
 	/**
-	* Sets the ratings stats total score of this asset entry set.
+	* Sets the asset entry set likes count of this asset entry set.
 	*
-	* @param ratingsStatsTotalScore the ratings stats total score of this asset entry set
+	* @param assetEntrySetLikesCount the asset entry set likes count of this asset entry set
 	*/
 	@Override
-	public void setRatingsStatsTotalScore(int ratingsStatsTotalScore) {
-		_assetEntrySet.setRatingsStatsTotalScore(ratingsStatsTotalScore);
+	public void setAssetEntrySetLikesCount(int assetEntrySetLikesCount) {
+		_assetEntrySet.setAssetEntrySetLikesCount(assetEntrySetLikesCount);
 	}
 
 	/**
@@ -566,6 +566,20 @@ public class AssetEntrySetWrapper implements AssetEntrySet,
 	public void persist()
 		throws com.liferay.portal.kernel.exception.SystemException {
 		_assetEntrySet.persist();
+	}
+
+	@Override
+	public java.util.List<com.liferay.asset.entry.set.model.AssetEntrySet> getChildAssetEntrySets() {
+		return _assetEntrySet.getChildAssetEntrySets();
+	}
+
+	@Override
+	public void setChildAssetEntrySets(long userId, long createTime,
+		int childAssetEntrySetsLimit)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		_assetEntrySet.setChildAssetEntrySets(userId, createTime,
+			childAssetEntrySetsLimit);
 	}
 
 	@Override
